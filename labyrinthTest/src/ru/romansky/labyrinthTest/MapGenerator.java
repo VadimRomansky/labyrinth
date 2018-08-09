@@ -2,7 +2,6 @@ package ru.romansky.labyrinthTest;
 
 import javafx.util.Pair;
 
-import javax.swing.*;
 import java.util.*;
 
 import static java.lang.Thread.sleep;
@@ -22,9 +21,11 @@ public class MapGenerator {
     boolean allowCycles;
     boolean stopAfterCycle;
     int minRegionSize;
+    int minotaurusCount;
+    int portalsCount;
     private MapPanel myMapPanel;
 
-    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, MapPanel mapPanel) {
+    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
         moles = new Stack<Mole>();
@@ -36,6 +37,8 @@ public class MapGenerator {
         branchingProbability = branchP;
         allowCycles = allowCyclesV;
         stopAfterCycle = stopAfterCycleV;
+        minotaurusCount = minotaurs;
+        portalsCount = portals;
     }
 
     public LabyrinthMap generateEmptyMap() {
@@ -127,6 +130,41 @@ public class MapGenerator {
         placePortalToEveryRegion(regions, map);
         placeArsenal(regions, map);
         placeHospital(regions, map);
+
+        for(int i = 0; i < minotaurusCount; ++i) {
+            placeMinotaur(regions, map);
+        }
+        placeCharacter(regions, map);
+    }
+
+    private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+        while (true) {
+            int i = random.nextInt(map.width);
+            int j = random.nextInt(map.width);
+            if (cellFitToMinotaur(map, i, j)) {
+                map.cells[i][j].addObject(new Minotaur());
+                return;
+            }
+        }
+    }
+
+    private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j) {
+        return ((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].myObjects.isEmpty());
+    }
+
+    private void placeCharacter(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+        while (true) {
+            int i = random.nextInt(map.width);
+            int j = random.nextInt(map.width);
+            if (cellFitToCharacter(map, i, j)) {
+                map.cells[i][j].addObject(new Character());
+                return;
+            }
+        }
+    }
+
+    private boolean cellFitToCharacter(LabyrinthMap map, int i, int j) {
+        return map.cells[i][j].myObjects.isEmpty();
     }
 
     private void placeHospital(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {

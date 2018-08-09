@@ -23,6 +23,10 @@ public class MainWindow {
     private JTextField branchingProbabilityText;
     private JLabel mregionSizeLabel;
     private JComboBox regionSizeComboBox;
+    private JLabel minotaurLabel;
+    private JComboBox minotaurCombobox;
+    private JLabel portalLabel;
+    private JComboBox portalsCombobox;
 
     public MainWindow(){
 
@@ -44,10 +48,16 @@ public class MainWindow {
         for(int i = 6; i < 16; ++i){
             heightComboBox.addItem(new Integer(i));
             widthComboBox.addItem(new Integer(i));
+            portalsCombobox.addItem(new Integer(i));
         }
         for(int i = 2; i < 5; ++i){
             regionSizeComboBox.addItem(new Integer(i));
         }
+        minotaurCombobox.addItem("zero");
+        minotaurCombobox.addItem("low");
+        minotaurCombobox.addItem("middle");
+        minotaurCombobox.addItem("high");
+        minotaurCombobox.addItem("they are everywhere!");
         stopProbabilityText.setText("0.1");
         branchingProbabilityText.setText("0.1");
 
@@ -63,6 +73,21 @@ public class MainWindow {
                 int width = (Integer) widthComboBox.getItemAt(widthComboBox.getSelectedIndex());
                 int height = (Integer) heightComboBox.getItemAt(heightComboBox.getSelectedIndex());
                 int minSize = (Integer) regionSizeComboBox.getItemAt(regionSizeComboBox.getSelectedIndex());
+                int portals = (Integer) portalsCombobox.getItemAt(portalsCombobox.getSelectedIndex());
+                int minotaursType = minotaurCombobox.getSelectedIndex();
+                int minotaurs = 0;
+                switch (minotaursType){
+                    case 1: minotaurs = width*height/12;
+                    break;
+                    case 2: minotaurs = width*height/9;
+                    break;
+                    case 3: minotaurs = width*height/6;
+                    break;
+                    case 4: minotaurs = width*height/3;
+                    break;
+                    default: minotaurs = 0;
+                    break;
+                }
                 boolean allowCycle = allowCycleButton.isSelected();
                 boolean stopAfterCycle = stopAfterCycleButton.isSelected();
                 try {
@@ -76,7 +101,7 @@ public class MainWindow {
                     } else if(branchP < 0.0 || branchP > 1.0){
 
                     } else {
-                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, (MapPanel) mapPanel);
+                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, (MapPanel) mapPanel);
                         final LabyrinthMap map = mapGenerator.generateEmptyMap();
                         ((MapPanel)mapPanel).resetMap(map);
                         mapGenerator.generateMap(map);

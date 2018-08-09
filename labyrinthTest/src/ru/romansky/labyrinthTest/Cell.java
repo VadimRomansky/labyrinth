@@ -54,4 +54,8 @@ public class Cell {
             object.paint(g, cellx, celly);
         }
     }
+
+    public void addObject(MapObject object) {
+        myObjects.add(object);
+    }
 }
