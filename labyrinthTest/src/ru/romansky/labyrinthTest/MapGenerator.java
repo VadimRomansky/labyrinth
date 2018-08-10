@@ -23,6 +23,7 @@ public class MapGenerator {
     int minRegionSize;
     int minotaurusCount;
     int portalsCount;
+    int regionsCount;
     private MapPanel myMapPanel;
 
     public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
@@ -252,39 +253,47 @@ public class MapGenerator {
         sortRegionsByNumber(regions);
         if (regions.size() > 1) {
             while (regions.lastElement().getValue().size() < minRegionSize) {
-                Pair<Integer, Vector<Pair<Integer, Integer>>> temp = regions.lastElement();
-                Vector<Pair<Integer, Integer>> region = temp.getValue();
-
-                Pair<Integer, Integer> connectionCoordinates = findConnectionCoordinates(region, map);
-
-                Pair<Integer, Integer> toConnectionCoordinates = findToConnectionoordinates(connectionCoordinates, map);
-
-                int i = connectionCoordinates.getKey();
-                int j = connectionCoordinates.getValue();
-                int tempi = toConnectionCoordinates.getKey();
-                int tempj = toConnectionCoordinates.getValue();
-
-                int newSetId = map.cells[tempi][tempj].setId;
-                int newRegionNumber = -1;
-                for (int l = 0; l < regions.size(); ++l) {
-                    if (regions.get(l).getKey().equals(newSetId)) {
-                        newRegionNumber = l;
-                        break;
-                    }
-                }
-                Vector<Pair<Integer, Integer>> newRegion = regions.get(newRegionNumber).getValue();
-                for (int l = 0; l < region.size(); ++l) {
-                    map.cells[region.get(l).getKey()][region.get(l).getValue()].setId = newSetId;
-                }
-                newRegion.addAll(region);
-                regions.removeElementAt(regions.size() - 1);
-                moveUpRegion(regions, newRegionNumber);
-
-                deleteBorderBetween(map, i, j, tempi, tempj);
+                cleanupSmallestRegion(map, regions);
+            }
+            while(regions.size() > portalsCount && regions.size() > 1){
+                cleanupSmallestRegion(map, regions);
             }
         }
 
+        regionsCount = regions.size();
         return regions;
+    }
+
+    private void cleanupSmallestRegion(LabyrinthMap map, Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions) throws InterruptedException {
+        Pair<Integer, Vector<Pair<Integer, Integer>>> temp = regions.lastElement();
+        Vector<Pair<Integer, Integer>> region = temp.getValue();
+
+        Pair<Integer, Integer> connectionCoordinates = findConnectionCoordinates(region, map);
+
+        Pair<Integer, Integer> toConnectionCoordinates = findToConnectionoordinates(connectionCoordinates, map);
+
+        int i = connectionCoordinates.getKey();
+        int j = connectionCoordinates.getValue();
+        int tempi = toConnectionCoordinates.getKey();
+        int tempj = toConnectionCoordinates.getValue();
+
+        int newSetId = map.cells[tempi][tempj].setId;
+        int newRegionNumber = -1;
+        for (int l = 0; l < regions.size(); ++l) {
+            if (regions.get(l).getKey().equals(newSetId)) {
+                newRegionNumber = l;
+                break;
+            }
+        }
+        Vector<Pair<Integer, Integer>> newRegion = regions.get(newRegionNumber).getValue();
+        for (int l = 0; l < region.size(); ++l) {
+            map.cells[region.get(l).getKey()][region.get(l).getValue()].setId = newSetId;
+        }
+        newRegion.addAll(region);
+        regions.removeElementAt(regions.size() - 1);
+        moveUpRegion(regions, newRegionNumber);
+
+        deleteBorderBetween(map, i, j, tempi, tempj);
     }
 
     private void moveUpRegion(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, int newRegionNumber) {

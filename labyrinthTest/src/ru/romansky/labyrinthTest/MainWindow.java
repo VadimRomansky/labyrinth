@@ -58,6 +58,7 @@ public class MainWindow {
         minotaurCombobox.addItem("middle");
         minotaurCombobox.addItem("high");
         minotaurCombobox.addItem("they are everywhere!");
+        minotaurCombobox.setSelectedIndex(2);
         stopProbabilityText.setText("0.1");
         branchingProbabilityText.setText("0.1");
 
