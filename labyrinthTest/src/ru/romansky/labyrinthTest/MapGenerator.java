@@ -29,6 +29,7 @@ public class MapGenerator {
     public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
+        //random = new Random(10);
         moles = new Stack<Mole>();
         height = h;
         width = w;
@@ -43,11 +44,11 @@ public class MapGenerator {
     }
 
     public LabyrinthMap generateEmptyMap() {
-        return new LabyrinthMap(height, width);
+        return new LabyrinthMap(width, height);
     }
 
     public LabyrinthMap generateMap() throws InterruptedException {
-        LabyrinthMap map = new LabyrinthMap(height, width);
+        LabyrinthMap map = new LabyrinthMap(width, height);
         generateMap(map);
         return map;
     }
@@ -129,6 +130,8 @@ public class MapGenerator {
         updateConnectedCells(map);
 
         placePortalToEveryRegion(regions, map);
+        //todo add rest of portals
+        connectPortals(map);
         placeArsenal(regions, map);
         placeHospital(regions, map);
 
@@ -136,12 +139,86 @@ public class MapGenerator {
             placeMinotaur(regions, map);
         }
         placeCharacter(regions, map);
+
+        int[][] dist = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, false, );
+        int[][] dist1 = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, true, );
+
+        System.out.print("distances from arsenal without minotaurs\n");
+        for(int j = 0; j < height; ++j){
+            for(int i = 0; i < width; ++i){
+                System.out.print(dist[i][j]);
+                System.out.print(' ');
+            }
+            System.out.print('\n');
+        }
+        System.out.print("distances from arsenal with minotaurs\n");
+        for(int j = 0; j < height; ++j){
+            for(int i = 0; i < width; ++i){
+                System.out.print(dist1[i][j]);
+                System.out.print(' ');
+            }
+            System.out.print('\n');
+        }
+
+        dist = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, false, );
+        dist1 = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, true, );
+
+        System.out.print("distances from hospital without minotaurs\n");
+        for(int j = 0; j < height; ++j){
+            for(int i = 0; i < width; ++i){
+                System.out.print(dist[i][j]);
+                System.out.print(' ');
+            }
+            System.out.print('\n');
+        }
+        System.out.print("distances from hospital with minotaurs\n");
+        for(int j = 0; j < height; ++j){
+            for(int i = 0; i < width; ++i){
+                System.out.print(dist1[i][j]);
+                System.out.print(' ');
+            }
+            System.out.print('\n');
+        }
+    }
+
+    private void connectPortals(LabyrinthMap map) {
+        LinkedList<PortalCell> portals = new LinkedList<>();
+        for(int i = 0; i < width; ++i){
+            for(int j = 0; j < height; ++j){
+                if(map.cells[i][j] instanceof PortalCell){
+                    portals.add((PortalCell) map.cells[i][j]);
+                }
+            }
+        }
+        Vector<PortalCell> sortedPortals = new Vector<>(portals.size());
+        int portalsCount = portals.size();
+        for(int i = 0; i < portalsCount; ++i){
+            int index = random.nextInt(portals.size());
+            PortalCell portal = portals.remove(index);
+            sortedPortals.add(i, portal);
+        }
+        for(int i = 0; i < portalsCount - 1; ++i){
+            PortalCell portal = sortedPortals.get(i);
+            PortalCell nextPortal = sortedPortals.get(i+1);
+            portal.setNumber(i+1);
+            portal.setPortalCoordinates(nextPortal.x, nextPortal.y);
+            portal.next = nextPortal;
+            if(i > 0){
+                portal.prev = sortedPortals.get(i-1);
+            }
+        }
+        PortalCell lastPortal = sortedPortals.get(portalsCount - 1);
+        PortalCell firstPortal = sortedPortals.get(0);
+        lastPortal.setNumber(portalsCount);
+        lastPortal.setPortalCoordinates(firstPortal.x, firstPortal.y);
+        lastPortal.next = firstPortal;
+        firstPortal.prev = lastPortal;
     }
 
     private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
         while (true) {
             int i = random.nextInt(map.width);
-            int j = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
             if (cellFitToMinotaur(map, i, j)) {
                 map.cells[i][j].addObject(new Minotaur());
                 return;
@@ -156,7 +233,7 @@ public class MapGenerator {
     private void placeCharacter(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
         while (true) {
             int i = random.nextInt(map.width);
-            int j = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
             if (cellFitToCharacter(map, i, j)) {
                 map.cells[i][j].addObject(new Character());
                 return;
@@ -171,10 +248,12 @@ public class MapGenerator {
     private void placeHospital(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
         while (true) {
             int i = random.nextInt(map.width);
-            int j = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
             if (cellFitToHospital(map, i, j)) {
                 HospitalCell cell = new HospitalCell(map.cells[i][j]);
                 map.cells[i][j] = cell;
+                map.hospitalx = i;
+                map.hospitaly = j;
                 return;
             }
         }
@@ -188,10 +267,12 @@ public class MapGenerator {
     private void placeArsenal(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
         while (true) {
             int i = random.nextInt(map.width);
-            int j = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
             if (cellFitToArsenal(map, i, j)) {
                 ArsenalCell cell = new ArsenalCell(map.cells[i][j]);
                 map.cells[i][j] = cell;
+                map.arsenalx = i;
+                map.arsenaly = j;
                 return;
             }
         }
@@ -368,7 +449,7 @@ public class MapGenerator {
                 }
             }
 
-            if (j < width - 1) {
+            if (j < height - 1) {
                 if (map.cells[i][j + 1].setId != map.cells[i][j].setId) {
                     result = new Pair<Integer, Integer>(i, j);
                     return result;

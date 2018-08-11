@@ -7,6 +7,13 @@ public class LabyrinthMap {
     int width;
     int height;
 
+    int arsenalx = -1;
+    int arsenaly = -1;
+    int hospitalx = -1;
+    int hospitaly = -1;
+    int exitx = -1;
+    int exity = -1;
+
     Cell[][] cells;
     VerticalBorder[][] verticalBorders;
     HorizontalBorder[][] horizontalBorders;

@@ -41,10 +41,10 @@ public class MainWindow {
     }
 
     public void show(){
-        myFrame.setMinimumSize(new Dimension(300,430));
-        myFrame.setBounds(400,300,300,430);
-        mainPanel.setSize(new Dimension(300, 430));
-        mapPanel.setSize(300, 300);
+        myFrame.setMinimumSize(new Dimension(600,600));
+        myFrame.setBounds(400,300,600,600);
+        mainPanel.setSize(new Dimension(600, 700));
+        mapPanel.setSize(600, 600);
         for(int i = 6; i < 16; ++i){
             heightComboBox.addItem(new Integer(i));
             widthComboBox.addItem(new Integer(i));

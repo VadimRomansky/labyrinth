@@ -7,6 +7,8 @@ public class PortalCell extends Cell {
     int number;
     int portalx;
     int portaly;
+    PortalCell next;
+    PortalCell prev;
     public PortalCell(int n, int xv, int yv, int id) {
         super(xv, yv, id);
         number = n;

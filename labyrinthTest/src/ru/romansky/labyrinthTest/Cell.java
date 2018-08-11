@@ -1,5 +1,6 @@
 package ru.romansky.labyrinthTest;
 
+
 import javafx.util.Pair;
 
 import java.awt.*;
@@ -57,5 +58,12 @@ public class Cell {
 
     public void addObject(MapObject object) {
         myObjects.add(object);
+    }
+
+    boolean hasMinotaurus(){
+        for (MapObject object : myObjects) {
+            if (object instanceof Minotaur) return true;
+        }
+        return false;
     }
 }
