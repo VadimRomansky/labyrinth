@@ -29,7 +29,7 @@ public class MapGenerator {
     public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
-        //random = new Random(10);
+        //random = new Random(13);
         moles = new Stack<Mole>();
         height = h;
         width = w;
@@ -130,6 +130,7 @@ public class MapGenerator {
         updateConnectedCells(map);
 
         placePortalToEveryRegion(regions, map);
+        placeRestPortals(regions, map);
         //todo add rest of portals
         connectPortals(map);
         placeArsenal(regions, map);
@@ -140,8 +141,8 @@ public class MapGenerator {
         }
         placeCharacter(regions, map);
 
-        int[][] dist = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, false, );
-        int[][] dist1 = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, true, );
+        int[][] dist = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, false, true, null);
+        int[][] dist1 = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, true, true, null);
 
         System.out.print("distances from arsenal without minotaurs\n");
         for(int j = 0; j < height; ++j){
@@ -160,8 +161,8 @@ public class MapGenerator {
             System.out.print('\n');
         }
 
-        dist = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, false, );
-        dist1 = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, true, );
+        dist = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, false, true, null);
+        dist1 = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, true, true, null);
 
         System.out.print("distances from hospital without minotaurs\n");
         for(int j = 0; j < height; ++j){
@@ -179,6 +180,98 @@ public class MapGenerator {
             }
             System.out.print('\n');
         }
+
+        List<Pair<Integer, Integer>> wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, false, true);
+        if(wayFromHtoA != null){
+            for (Pair<Integer, Integer> pair :
+                    wayFromHtoA) {
+                System.out.print(pair.getKey());
+                System.out.print(' ');
+                System.out.print(pair.getValue());
+                System.out.print('\n');
+            }
+        } else {
+            System.out.print("there is no way from hospital to arsenal\n");
+        }
+        wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
+        if(wayFromHtoA != null){
+            for (Pair<Integer, Integer> pair :
+                    wayFromHtoA) {
+                System.out.print(pair.getKey());
+                System.out.print(' ');
+                System.out.print(pair.getValue());
+                System.out.print('\n');
+            }
+        } else {
+            System.out.print("there is no way from hospital to arsenal free from minotaurs\n");
+        }
+    }
+
+    private void placeRestPortals(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+        int curPortalsCount = regions.size();
+        while(curPortalsCount < portalsCount){
+            while (true) {
+                int i = random.nextInt(map.width);
+                int j = random.nextInt(map.height);
+                if (cellFitToPortal(map.cells[i][j], map)) {
+                    PortalCell portal = new PortalCell(curPortalsCount, map.cells[i][j]);
+                    map.cells[i][j] = portal;
+                    break;
+                }
+            }
+            curPortalsCount++;
+        }
+    }
+
+    private boolean cellFitToPortal(Cell cell, LabyrinthMap map) {
+        if(cell.type != CellType.SIMPLE_CELL){
+            return false;
+        }
+        //must have some simple neighbout
+        boolean hasSimpleNeighbour = hasSimpleNeighbour(cell, map);
+        if(!hasSimpleNeighbour){
+            return false;
+        }
+        //neighbours must have simple neighbour
+        for (Pair<Integer, Integer> tempCell :
+                cell.connectedCells) {
+            int tempi = tempCell.getKey();
+            int tempj = tempCell.getValue();
+            if(map.cells[tempi][tempj].type == CellType.PORTAL) {
+                if (!hasSimpleNeighbourExceptThis(map.cells[tempi][tempj], map, cell.x, cell.y)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean hasSimpleNeighbourExceptThis(Cell cell, LabyrinthMap map, int i, int j) {
+        boolean result = false;
+        for (Pair<Integer, Integer> tempCell :
+                cell.connectedCells) {
+            int tempi = tempCell.getKey();
+            int tempj = tempCell.getValue();
+            if((tempi != i) && (tempj != j) && map.cells[tempi][tempj].type == CellType.SIMPLE_CELL){
+                result = true;
+                break;
+            }
+        }
+        return result;
+    }
+
+    private boolean hasSimpleNeighbour(Cell cell, LabyrinthMap map) {
+        boolean result = false;
+        for (Pair<Integer, Integer> tempCell :
+                cell.connectedCells) {
+            int tempi = tempCell.getKey();
+            int tempj = tempCell.getValue();
+            if(map.cells[tempi][tempj].type == CellType.SIMPLE_CELL){
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
     private void connectPortals(LabyrinthMap map) {
