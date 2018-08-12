@@ -3,6 +3,7 @@ package ru.romansky.labyrinthTest;
 import javafx.util.Pair;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static java.lang.Thread.sleep;
 
@@ -408,8 +409,8 @@ public class MapGenerator {
         return cell.type == CellType.SIMPLE_CELL;
     }
 
-    private void placeArsenal(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
-        while (true) {
+    private void placeArsenal(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, final LabyrinthMap map) {
+        /*while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
             if (cellFitToArsenal(map, i, j)) {
@@ -419,7 +420,39 @@ public class MapGenerator {
                 map.arsenaly = j;
                 return;
             }
+        }*/
+        int lengthToPortal = (width + height)/2;
+        Vector<Triplet<Integer, Integer, Integer>> candidates = new Vector<>();
+        for(int i = 0; i < map.width; ++i){
+            for(int j = 0; j < map.height; ++j){
+                if (cellFitToArsenal(map, i, j)) {
+                    int nearPortals = Util.evaluateNumberOfNearPortals(map, i, j, lengthToPortal);
+                    boolean added = false;
+                    for(int l = 0; l < candidates.size(); ++l){
+                        if(nearPortals > candidates.get(l).getFirst()){
+                            candidates.add(l, new Triplet<Integer, Integer, Integer>(nearPortals, i, j));
+                            added = true;
+                            break;
+                        }
+                    }
+                    if(!added){
+                        candidates.add(candidates.size(), new Triplet<Integer, Integer, Integer>(nearPortals, i, j));
+                    }
+                }
+            }
         }
+        //todo always first?
+        int candidatesNumber = 1;
+        while(candidates.size() > candidatesNumber){
+            candidates.remove(candidates.size() - 1);
+        }
+
+
+        Triplet<Integer, Integer, Integer> pair = candidates.get(random.nextInt(candidates.size()));
+        map.arsenalx = pair.getSecond();
+        map.arsenaly = pair.getThird();
+        ArsenalCell cell = new ArsenalCell(map.cells[map.arsenalx][map.arsenaly]);
+        map.cells[map.arsenalx][map.arsenaly] = cell;
     }
 
     private boolean cellFitToArsenal(LabyrinthMap map, int i, int j) {

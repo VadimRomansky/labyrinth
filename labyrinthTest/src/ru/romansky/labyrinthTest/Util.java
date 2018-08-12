@@ -133,4 +133,48 @@ public class Util {
             return null;
         }
     }
+
+    public static int evaluateNumberOfNearPortals(LabyrinthMap map, int starti, int startj){
+        return evaluateNumberOfNearPortals(map, starti, startj, 1, true);
+    }
+
+    public static int evaluateNumberOfNearPortals(LabyrinthMap map, int starti, int startj, int length){
+        return evaluateNumberOfNearPortals(map, starti, startj, length, false);
+    }
+
+    public static int evaluateNumberOfNearPortals(LabyrinthMap map, int starti, int startj, int length, boolean unlimited){
+        int[][] distances = new int[map.width][map.height];
+        int result = 0;
+        for(int i = 0; i < map.width; ++i){
+            for(int j = 0; j < map.height; ++j){
+                distances[i][j] = -1;
+            }
+        }
+        distances[starti][startj] = 0;
+        LinkedList<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
+
+        queue.addLast(new Pair<>(starti, startj));
+        while(!queue.isEmpty()){
+            Pair<Integer, Integer> pair = queue.pollFirst();
+            int curi = pair.getKey();
+            int curj = pair.getValue();
+            int dist = distances[curi][curj] + 1;
+
+            if(dist <= length || unlimited) {
+                for (Pair<Integer, Integer> tempPair : map.cells[curi][curj].connectedCells) {
+                    int tempi = tempPair.getKey();
+                    int tempj = tempPair.getValue();
+                    if (map.cells[tempi][tempj].type == CellType.PORTAL) {
+                        result++;
+                    } else {
+                        if (distances[tempi][tempj] == -1) {
+                            distances[tempi][tempj] = dist;
+                            queue.addLast(new Pair<Integer, Integer>(tempi, tempj));
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
 }
