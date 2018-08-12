@@ -5,11 +5,11 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class Util {
-    public static int[][] EvaluateDistancesBFS(LabyrinthMap map, int width, int height, int starti, int startj, boolean checkMinotaurs, boolean direction, Pair<Integer, Integer>[][] parents){
-        int[][] result = new int[width][height];
-        int totalCount = width*height;
-        for(int i = 0; i < width; ++i){
-            for(int j = 0; j < height; ++j){
+    public static int[][] EvaluateDistancesBFS(LabyrinthMap map, int starti, int startj, boolean checkMinotaurs, boolean direction, Pair<Integer, Integer>[][] parents){
+        int[][] result = new int[map.width][map.height];
+        int totalCount = map.width*map.height;
+        for(int i = 0; i < map.width; ++i){
+            for(int j = 0; j < map.height; ++j){
                 result[i][j] = -1;
                 if(parents != null) {
                     parents[i][j] = null;

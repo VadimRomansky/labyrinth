@@ -26,7 +26,7 @@ public class MainWindow {
     private JLabel minotaurLabel;
     private JComboBox minotaurCombobox;
     private JLabel portalLabel;
-    private JComboBox portalsCombobox;
+    private JComboBox portalsComboBox;
 
     public MainWindow(){
 
@@ -48,8 +48,11 @@ public class MainWindow {
         for(int i = 6; i < 16; ++i){
             heightComboBox.addItem(new Integer(i));
             widthComboBox.addItem(new Integer(i));
-            portalsCombobox.addItem(new Integer(i));
+            portalsComboBox.addItem(new Integer(i));
         }
+        widthComboBox.setSelectedIndex(4);
+        heightComboBox.setSelectedIndex(4);
+        portalsComboBox.setSelectedIndex(4);
         for(int i = 2; i < 5; ++i){
             regionSizeComboBox.addItem(new Integer(i));
         }
@@ -74,7 +77,7 @@ public class MainWindow {
                 int width = (Integer) widthComboBox.getItemAt(widthComboBox.getSelectedIndex());
                 int height = (Integer) heightComboBox.getItemAt(heightComboBox.getSelectedIndex());
                 int minSize = (Integer) regionSizeComboBox.getItemAt(regionSizeComboBox.getSelectedIndex());
-                int portals = (Integer) portalsCombobox.getItemAt(portalsCombobox.getSelectedIndex());
+                int portals = (Integer) portalsComboBox.getItemAt(portalsComboBox.getSelectedIndex());
                 int minotaursType = minotaurCombobox.getSelectedIndex();
                 int minotaurs = 0;
                 switch (minotaursType){

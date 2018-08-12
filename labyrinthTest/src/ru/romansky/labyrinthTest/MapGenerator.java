@@ -29,7 +29,7 @@ public class MapGenerator {
     public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
-        //random = new Random(13);
+        //random = new Random(12);
         moles = new Stack<Mole>();
         height = h;
         width = w;
@@ -136,13 +136,15 @@ public class MapGenerator {
         placeArsenal(regions, map);
         placeHospital(regions, map);
 
+        List<Pair<Integer, Integer>> wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
+
         for(int i = 0; i < minotaurusCount; ++i) {
-            placeMinotaur(regions, map);
+            placeMinotaur(regions, map, wayFromHtoA);
         }
         placeCharacter(regions, map);
 
-        int[][] dist = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, false, true, null);
-        int[][] dist1 = Util.EvaluateDistancesBFS(map, width, height, map.arsenalx, map.arsenaly, true, true, null);
+        /*int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, true, null);
+        int[][] dist1 = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, true, true, null);
 
         System.out.print("distances from arsenal without minotaurs\n");
         for(int j = 0; j < height; ++j){
@@ -161,8 +163,8 @@ public class MapGenerator {
             System.out.print('\n');
         }
 
-        dist = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, false, true, null);
-        dist1 = Util.EvaluateDistancesBFS(map, width, height, map.hospitalx, map.hospitaly, true, true, null);
+        dist = Util.EvaluateDistancesBFS(map, map.hospitalx, map.hospitaly, false, true, null);
+        dist1 = Util.EvaluateDistancesBFS(map, map.hospitalx, map.hospitaly, true, true, null);
 
         System.out.print("distances from hospital without minotaurs\n");
         for(int j = 0; j < height; ++j){
@@ -179,10 +181,11 @@ public class MapGenerator {
                 System.out.print(' ');
             }
             System.out.print('\n');
-        }
+        }*/
 
-        List<Pair<Integer, Integer>> wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, false, true);
+        wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, false, true);
         if(wayFromHtoA != null){
+            System.out.print("way from hospital to arsenal\n");
             for (Pair<Integer, Integer> pair :
                     wayFromHtoA) {
                 System.out.print(pair.getKey());
@@ -195,6 +198,7 @@ public class MapGenerator {
         }
         wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
         if(wayFromHtoA != null){
+            System.out.print("way from hospital to arsenal free from minotaurs\n");
             for (Pair<Integer, Integer> pair :
                     wayFromHtoA) {
                 System.out.print(pair.getKey());
@@ -304,23 +308,34 @@ public class MapGenerator {
         PortalCell firstPortal = sortedPortals.get(0);
         lastPortal.setNumber(portalsCount);
         lastPortal.setPortalCoordinates(firstPortal.x, firstPortal.y);
+        lastPortal.prev = sortedPortals.get(portalsCount - 2);
         lastPortal.next = firstPortal;
         firstPortal.prev = lastPortal;
     }
 
-    private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+    private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA) {
         while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
-            if (cellFitToMinotaur(map, i, j)) {
+            if (cellFitToMinotaur(map, i, j, wayFromHtoA)) {
                 map.cells[i][j].addObject(new Minotaur());
                 return;
             }
         }
     }
 
-    private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j) {
-        return ((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].myObjects.isEmpty());
+    private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j, List<Pair<Integer, Integer>> wayFromHtoA) {
+        if (!((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].myObjects.isEmpty())){
+            return false;
+        }
+        for (Pair<Integer, Integer> pair : wayFromHtoA) {
+            int tempi = pair.getKey();
+            int tempj = pair.getValue();
+            if(tempi == i && tempj == j){
+                return false;
+            }
+        }
+        return true;
     }
 
     private void placeCharacter(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
@@ -339,7 +354,7 @@ public class MapGenerator {
     }
 
     private void placeHospital(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
-        while (true) {
+        /*while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
             if (cellFitToHospital(map, i, j)) {
@@ -349,7 +364,43 @@ public class MapGenerator {
                 map.hospitaly = j;
                 return;
             }
+        }*/
+        Pair<Integer, Integer>[][] parents = new Pair[width][height];
+        int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, false, parents);
+        Pair<Integer, Integer> tempCoords = findPlaceForHospital(map, dist);
+
+        int i = tempCoords.getKey();
+        int j = tempCoords.getValue();
+        HospitalCell cell = new HospitalCell(map.cells[i][j]);
+        map.cells[i][j] = cell;
+        map.hospitalx = i;
+        map.hospitaly = j;
+    }
+
+    private Pair<Integer, Integer> findPlaceForHospital(LabyrinthMap map, int[][] dist) {
+        Vector<Pair<Integer, Integer>> suitableCells = new Vector<>();
+        for(int i = 0; i < map.width; ++i){
+            for(int j = 0; j < map.height; ++j){
+                if((dist[i][j] >= (map.width + map.height)/3 - 1) && (dist[i][j] <= (map.width + map.height)/3 + 1) && (map.cells[i][j].type == CellType.SIMPLE_CELL)){
+                    suitableCells.add(new Pair<Integer, Integer>(i, j));
+                }
+            }
         }
+
+        //todo
+        if(suitableCells.isEmpty()){
+            for(int currentDist = (map.width + map.height)/3 - 2; currentDist > 0; --currentDist){
+                for(int i = 0; i < map.width; ++i){
+                    for(int j = 0; j < map.height; ++j){
+                        if((dist[i][j] == currentDist) && (map.cells[i][j].type == CellType.SIMPLE_CELL)){
+                            return new Pair<Integer, Integer>(i, j);
+                        }
+                    }
+                }
+            }
+        }
+
+        return suitableCells.get(random.nextInt(suitableCells.size()));
     }
 
     private boolean cellFitToHospital(LabyrinthMap map, int i, int j) {
