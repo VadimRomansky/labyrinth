@@ -3,7 +3,6 @@ package ru.romansky.labyrinthTest;
 import javafx.util.Pair;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 import static java.lang.Thread.sleep;
 
@@ -18,6 +17,7 @@ public class MapGenerator {
     double branchingProbability;
     double stopProbability;
     Random random;
+    long randomSeed;
     int[][] visited;
     boolean allowCycles;
     boolean stopAfterCycle;
@@ -25,12 +25,18 @@ public class MapGenerator {
     int minotaurusCount;
     int portalsCount;
     int regionsCount;
+    int maxRegionsCount;
     private MapPanel myMapPanel;
 
-    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, MapPanel mapPanel) {
+    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, int maxRegions, MapPanel mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
-        //random = new Random(12);
+        randomSeed = random.nextInt();
+        //randomSeed = 12;
+        random.setSeed(randomSeed);
+        System.out.print("random seed = ");
+        System.out.print(randomSeed);
+        System.out.println();
         moles = new Stack<Mole>();
         height = h;
         width = w;
@@ -42,6 +48,7 @@ public class MapGenerator {
         stopAfterCycle = stopAfterCycleV;
         minotaurusCount = minotaurs;
         portalsCount = portals;
+        maxRegionsCount = maxRegions;
     }
 
     public LabyrinthMap generateEmptyMap() {
@@ -144,7 +151,7 @@ public class MapGenerator {
         }
         placeCharacter(regions, map);
 
-        /*int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, true, null);
+        int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, false, null);
         int[][] dist1 = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, true, true, null);
 
         System.out.print("distances from arsenal without minotaurs\n");
@@ -182,7 +189,7 @@ public class MapGenerator {
                 System.out.print(' ');
             }
             System.out.print('\n');
-        }*/
+        }
 
         wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, false, true);
         if(wayFromHtoA != null){
@@ -379,17 +386,30 @@ public class MapGenerator {
     }
 
     private Pair<Integer, Integer> findPlaceForHospital(LabyrinthMap map, int[][] dist) {
-        Vector<Pair<Integer, Integer>> suitableCells = new Vector<>();
+        Vector<Triplet<Integer, Integer, Integer>> candidates = new Vector<>();
+        int preferedDistToArsenal = (map.width + map.height);
+        int lengthToPortal = preferedDistToArsenal/4;
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height; ++j){
-                if((dist[i][j] >= (map.width + map.height)/3 - 1) && (dist[i][j] <= (map.width + map.height)/3 + 1) && (map.cells[i][j].type == CellType.SIMPLE_CELL)){
-                    suitableCells.add(new Pair<Integer, Integer>(i, j));
+                if((dist[i][j] >= preferedDistToArsenal - 1) && (dist[i][j] <= preferedDistToArsenal + 1) && (map.cells[i][j].type == CellType.SIMPLE_CELL)){
+                    int nearPortals = Util.evaluateNumberOfNearPortals(map, i, j, lengthToPortal);
+                    boolean added = false;
+                    for(int l = 0; l < candidates.size(); ++l){
+                        if(nearPortals > candidates.get(l).getFirst()){
+                            candidates.add(l, new Triplet<Integer, Integer, Integer>(nearPortals, i, j));
+                            added = true;
+                            break;
+                        }
+                    }
+                    if(!added){
+                        candidates.add(candidates.size(), new Triplet<Integer, Integer, Integer>(nearPortals, i, j));
+                    }
                 }
             }
         }
 
         //todo
-        if(suitableCells.isEmpty()){
+        if(candidates.isEmpty()){
             for(int currentDist = (map.width + map.height)/3 - 2; currentDist > 0; --currentDist){
                 for(int i = 0; i < map.width; ++i){
                     for(int j = 0; j < map.height; ++j){
@@ -401,7 +421,13 @@ public class MapGenerator {
             }
         }
 
-        return suitableCells.get(random.nextInt(suitableCells.size()));
+        int candidatesNumber = 3;
+        while(candidates.size() > candidatesNumber){
+            candidates.remove(candidates.size() - 1);
+        }
+
+        Triplet<Integer, Integer, Integer> triplet = candidates.get(random.nextInt(candidates.size()));
+        return new Pair<Integer, Integer>(triplet.getSecond(), triplet.getThird());
     }
 
     private boolean cellFitToHospital(LabyrinthMap map, int i, int j) {
@@ -421,7 +447,7 @@ public class MapGenerator {
                 return;
             }
         }*/
-        int lengthToPortal = (width + height)/2;
+        int lengthToPortal = (width + height);
         Vector<Triplet<Integer, Integer, Integer>> candidates = new Vector<>();
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height; ++j){
@@ -442,7 +468,7 @@ public class MapGenerator {
             }
         }
         //todo always first?
-        int candidatesNumber = 1;
+        int candidatesNumber = 3;
         while(candidates.size() > candidatesNumber){
             candidates.remove(candidates.size() - 1);
         }
@@ -513,7 +539,7 @@ public class MapGenerator {
             while (regions.lastElement().getValue().size() < minRegionSize) {
                 cleanupSmallestRegion(map, regions);
             }
-            while(regions.size() > portalsCount && regions.size() > 1){
+            while(((regions.size() > portalsCount) || (regions.size() > maxRegionsCount)) && regions.size() > 1){
                 cleanupSmallestRegion(map, regions);
             }
         }
@@ -528,7 +554,7 @@ public class MapGenerator {
 
         Pair<Integer, Integer> connectionCoordinates = findConnectionCoordinates(region, map);
 
-        Pair<Integer, Integer> toConnectionCoordinates = findToConnectionoordinates(connectionCoordinates, map);
+        Pair<Integer, Integer> toConnectionCoordinates = findToConnectionoCordinates(connectionCoordinates, map);
 
         int i = connectionCoordinates.getKey();
         int j = connectionCoordinates.getValue();
@@ -568,7 +594,7 @@ public class MapGenerator {
         }
     }
 
-    private Pair<Integer, Integer> findToConnectionoordinates(Pair<Integer, Integer> connectionCoordinates, LabyrinthMap map) {
+    private Pair<Integer, Integer> findToConnectionoCordinates(Pair<Integer, Integer> connectionCoordinates, LabyrinthMap map) {
         Vector<Pair<Integer, Integer>> coords = new Vector<>();
         int i = connectionCoordinates.getKey();
         int j = connectionCoordinates.getValue();

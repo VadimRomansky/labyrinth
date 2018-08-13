@@ -27,6 +27,8 @@ public class MainWindow {
     private JComboBox minotaurCombobox;
     private JLabel portalLabel;
     private JComboBox portalsComboBox;
+    private JLabel regionsLabel;
+    private JComboBox maxRegionsComboBox;
 
     public MainWindow(){
 
@@ -53,9 +55,14 @@ public class MainWindow {
         widthComboBox.setSelectedIndex(4);
         heightComboBox.setSelectedIndex(4);
         portalsComboBox.setSelectedIndex(4);
-        for(int i = 2; i < 5; ++i){
+        for(int i = 2; i < 6; ++i){
             regionSizeComboBox.addItem(new Integer(i));
         }
+        regionSizeComboBox.setSelectedIndex(3);
+        for(int i = 1; i < 11; ++i){
+            maxRegionsComboBox.addItem(new Integer(i));
+        }
+        maxRegionsComboBox.setSelectedIndex(5);
         minotaurCombobox.addItem("zero");
         minotaurCombobox.addItem("low");
         minotaurCombobox.addItem("middle");
@@ -64,6 +71,7 @@ public class MainWindow {
         minotaurCombobox.setSelectedIndex(2);
         stopProbabilityText.setText("0.1");
         branchingProbabilityText.setText("0.1");
+        //allowCycleButton.setSelected(true);
 
         myFrame.setContentPane(mainPanel);
         myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,6 +86,7 @@ public class MainWindow {
                 int height = (Integer) heightComboBox.getItemAt(heightComboBox.getSelectedIndex());
                 int minSize = (Integer) regionSizeComboBox.getItemAt(regionSizeComboBox.getSelectedIndex());
                 int portals = (Integer) portalsComboBox.getItemAt(portalsComboBox.getSelectedIndex());
+                int maxRegions = (Integer) maxRegionsComboBox.getItemAt(maxRegionsComboBox.getSelectedIndex());
                 int minotaursType = minotaurCombobox.getSelectedIndex();
                 int minotaurs = 0;
                 switch (minotaursType){
@@ -105,7 +114,7 @@ public class MainWindow {
                     } else if(branchP < 0.0 || branchP > 1.0){
 
                     } else {
-                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, (MapPanel) mapPanel);
+                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, (MapPanel) mapPanel);
                         final LabyrinthMap map = mapGenerator.generateEmptyMap();
                         ((MapPanel)mapPanel).resetMap(map);
                         mapGenerator.generateMap(map);

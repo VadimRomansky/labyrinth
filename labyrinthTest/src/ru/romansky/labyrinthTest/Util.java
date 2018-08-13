@@ -39,7 +39,7 @@ public class Util {
                         portalj = ((PortalCell) map.cells[tempi][tempj]).portaly;
                     } else {
                         portali = ((PortalCell) map.cells[tempi][tempj]).prev.x;
-                        portalj = ((PortalCell) map.cells[tempi][tempj]).prev.x;
+                        portalj = ((PortalCell) map.cells[tempi][tempj]).prev.y;
                     }
                     tempi = portali;
                     tempj = portalj;
@@ -98,7 +98,7 @@ public class Util {
                         portalj = ((PortalCell) map.cells[tempi][tempj]).portaly;
                     } else {
                         portali = ((PortalCell) map.cells[tempi][tempj]).prev.x;
-                        portalj = ((PortalCell) map.cells[tempi][tempj]).prev.x;
+                        portalj = ((PortalCell) map.cells[tempi][tempj]).prev.y;
                     }
                     tempi = portali;
                     tempj = portalj;
