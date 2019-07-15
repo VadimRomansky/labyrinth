@@ -2,16 +2,12 @@ package ru.romansky.labyrinthTest;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * Created by Vadim on 01.08.2018.
  */
-public class MapPanel extends JPanel {
-    JFrame myFrame;
-    JPanel myParent;
-    LabyrinthMap myMap;
-    final static int cellWidth = 30;
-    final static int borderWidth = 1;
+public class MapPanel extends MapPanelBase {
 
     public MapPanel(JFrame frame, JPanel parent) {
         this.myFrame = frame;
@@ -27,6 +23,11 @@ public class MapPanel extends JPanel {
 
     public void resetMap(LabyrinthMap map){
         myMap = map;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
     }
 
     public void paintComponent(Graphics g){

@@ -9,6 +9,12 @@ import java.io.IOException;
  * Created by Vadim on 09.08.2018.
  */
 public class Minotaur extends MapObject {
+    private boolean alive = true;
+
+    public boolean isAlive(){
+        return alive;
+    }
+
     @Override
     public void print() {
         System.out.print('M');

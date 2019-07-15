@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Locale;
 
 public class MainWindow {
@@ -39,7 +41,17 @@ public class MainWindow {
         JFrame frame = new JFrame("labyrinth");
         myFrame = frame;
         mainPanel = new JPanel();
-        mapPanel = new MapPanel(myFrame, mainPanel);
+        //mapPanel = new MapPanel(myFrame, mainPanel);
+        mapPanel = new GamePanel(myFrame, mainPanel);
+        //mapPanel.setFocusable(true);
+        frame.setFocusable( true );
+        frame.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                System.out.println(e.getKeyCode());
+                ((MapPanelBase)mapPanel).keyPressed(e);
+            }
+        });
     }
 
     public void show(){
@@ -82,6 +94,7 @@ public class MainWindow {
         generateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                myFrame.requestFocus();
                 int width = (Integer) widthComboBox.getItemAt(widthComboBox.getSelectedIndex());
                 int height = (Integer) heightComboBox.getItemAt(heightComboBox.getSelectedIndex());
                 int minSize = (Integer) regionSizeComboBox.getItemAt(regionSizeComboBox.getSelectedIndex());
@@ -114,10 +127,11 @@ public class MainWindow {
                     } else if(branchP < 0.0 || branchP > 1.0){
 
                     } else {
-                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, (MapPanel) mapPanel);
+                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, (MapPanelBase) mapPanel);
                         final LabyrinthMap map = mapGenerator.generateEmptyMap();
-                        ((MapPanel)mapPanel).resetMap(map);
                         mapGenerator.generateMap(map);
+                        ((MapPanelBase)mapPanel).resetMap(map);
+
                         //map.print();
                         mapPanel.repaint();
                     }

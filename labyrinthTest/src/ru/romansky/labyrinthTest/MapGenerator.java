@@ -26,9 +26,9 @@ public class MapGenerator {
     int portalsCount;
     int regionsCount;
     int maxRegionsCount;
-    private MapPanel myMapPanel;
+    private MapPanelBase myMapPanel;
 
-    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, int maxRegions, MapPanel mapPanel) {
+    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, int maxRegions, MapPanelBase mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
