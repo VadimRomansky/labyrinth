@@ -11,7 +11,8 @@ public class ArsenalCell extends Cell {
     public ArsenalCell(Cell cell){
         super(cell.x, cell.y, cell.setId);
         this.connectedCells.addAll(cell.connectedCells);
-        this.myObjects.addAll(cell.myObjects);
+        this.characters.addAll(cell.characters);
+        this.minotaur = cell.minotaur;
         type = CellType.ARSENAL;
     }
 

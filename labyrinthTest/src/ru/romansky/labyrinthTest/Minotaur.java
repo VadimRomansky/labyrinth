@@ -23,11 +23,20 @@ public class Minotaur extends MapObject {
     @Override
     public void paint(Graphics g, int cellx, int celly) {
         try {
-            File file = new File("res/minotaur.png");
+            File file;
+            if(alive) {
+                file = new File("res/minotaur.png");
+            } else {
+                file = new File("res/dead_minotaur.png");
+            }
             Image img= ImageIO.read(file);
             g.drawImage(img, cellx - 9, celly - 9, null);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void kill() {
+        alive = false;
     }
 }

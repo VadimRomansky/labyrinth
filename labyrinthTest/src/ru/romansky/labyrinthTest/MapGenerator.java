@@ -326,14 +326,14 @@ public class MapGenerator {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
             if (cellFitToMinotaur(map, i, j, wayFromHtoA)) {
-                map.cells[i][j].addObject(new Minotaur());
+                map.cells[i][j].minotaur = new Minotaur();
                 return;
             }
         }
     }
 
     private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j, List<Pair<Integer, Integer>> wayFromHtoA) {
-        if (!((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].myObjects.isEmpty())){
+        if (!((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].minotaur == null)){
             return false;
         }
         for (Pair<Integer, Integer> pair : wayFromHtoA) {
@@ -351,14 +351,14 @@ public class MapGenerator {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
             if (cellFitToCharacter(map, i, j)) {
-                map.cells[i][j].addObject(new Character());
+                map.cells[i][j].addCharacter(new Character());
                 return;
             }
         }
     }
 
     private boolean cellFitToCharacter(LabyrinthMap map, int i, int j) {
-        return map.cells[i][j].myObjects.isEmpty();
+        return map.cells[i][j].minotaur == null;
     }
 
     private void placeHospital(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {

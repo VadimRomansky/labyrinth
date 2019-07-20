@@ -18,26 +18,20 @@ public class Cell {
     CellType type;
     Vector<Pair<Integer, Integer>> connectedCells;
 
-    Vector<MapObject> myObjects;
+    Vector<MapObject> characters;
+    Minotaur minotaur = null;
 
     public Cell(int xv, int yv, int id){
         x = xv;
         y = yv;
         setId = id;
         connectedCells = new Vector<>();
-        myObjects = new Vector<>();
+        characters = new Vector<>();
         type = CellType.SIMPLE_CELL;
     }
 
     public  void print(){
         System.out.print(' ');
-    }
-
-    public void putObject(MapObject mapObject){
-        myObjects.add(mapObject);
-    }
-    public void deleteObject(MapObject mapObject){
-        myObjects.remove(mapObject);
     }
 
     public void paint(Graphics g, int cellx, int celly) {
@@ -51,19 +45,19 @@ public class Cell {
     }
 
     public void paintObjects(Graphics g, int cellx, int celly){
-        for (MapObject object : myObjects) {
+        if(minotaur != null){
+            minotaur.paint(g, cellx, celly);
+        }
+        for (MapObject object : characters) {
             object.paint(g, cellx, celly);
         }
     }
 
-    public void addObject(MapObject object) {
-        myObjects.add(object);
+    public void addCharacter(MapObject object) {
+        characters.add(object);
     }
 
     boolean hasMinotaurus(){
-        for (MapObject object : myObjects) {
-            if (object instanceof Minotaur) return true;
-        }
-        return false;
+        return minotaur != null;
     }
 }

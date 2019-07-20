@@ -18,7 +18,8 @@ public class PortalCell extends Cell {
     public PortalCell(int n, Cell cell){
         super(cell.x, cell.y, cell.setId);
         this.connectedCells.addAll(cell.connectedCells);
-        this.myObjects.addAll(cell.myObjects);
+        this.characters.addAll(cell.characters);
+        this.minotaur = cell.minotaur;
         number = n;
         type = CellType.PORTAL;
     }
