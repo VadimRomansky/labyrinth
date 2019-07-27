@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="labyrinthTest:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/labyrinthTest_jar</output-path>
+    <root id="archive" name="labyrinthTest.jar">
+      <element id="module-output" name="labyrinthTest" />
+    </root>
+  </artifact>
+</component>

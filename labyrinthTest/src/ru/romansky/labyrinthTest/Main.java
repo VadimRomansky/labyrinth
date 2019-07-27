@@ -19,7 +19,8 @@ public class Main {
         //printWriter.print("Some String");
         //printWriter.printf("Product name is %s and its price is %d $", "iPhone", 1000);
         //printWriter.close();
-        MainWindow window = new MainWindow();
+        //MainWindow window = new MainWindow();
+        NewMainWindow window = new NewMainWindow();
         window.show();
     }
 }

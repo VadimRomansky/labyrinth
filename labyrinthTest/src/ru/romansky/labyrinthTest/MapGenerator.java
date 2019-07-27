@@ -139,6 +139,7 @@ public class MapGenerator {
 
         placePortalToEveryRegion(regions, map);
         placeRestPortals(regions, map);
+
         //todo add rest of portals
         connectPortals(map);
         placeArsenal(regions, map);
@@ -151,6 +152,30 @@ public class MapGenerator {
         }
         placeCharacter(regions, map);
 
+        placeExit(map);
+
+        outputDebubInfo(map);
+    }
+
+    private void placeExit(LabyrinthMap map) {
+        int randN = random.nextInt(2);
+        if(randN == 0){
+            //vertical;
+            randN = random.nextInt(2);
+            int i = width*randN;
+            int j = random.nextInt(height);
+            map.verticalBorders[i][j].setState(BorderState.DOOR);
+        } else {
+            //horizontal;
+            randN = random.nextInt(2);
+            int i = random.nextInt(width);
+            int j = height*randN;
+            map.horizontalBorders[i][j].setState(BorderState.DOOR);
+        }
+    }
+
+    private void outputDebubInfo(LabyrinthMap map) {
+        List<Pair<Integer, Integer>> wayFromHtoA;
         int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, false, null);
         int[][] dist1 = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, true, true, null);
 
@@ -228,6 +253,7 @@ public class MapGenerator {
                 if (cellFitToPortal(map.cells[i][j], map)) {
                     PortalCell portal = new PortalCell(curPortalsCount, map.cells[i][j]);
                     map.cells[i][j] = portal;
+                    map.portalsCount++;
                     break;
                 }
             }
@@ -327,6 +353,8 @@ public class MapGenerator {
             int j = random.nextInt(map.height);
             if (cellFitToMinotaur(map, i, j, wayFromHtoA)) {
                 map.cells[i][j].minotaur = new Minotaur();
+                map.minotaursCount++;
+                map.aliveMinotaursCount = map.minotaursCount;
                 return;
             }
         }
@@ -506,6 +534,7 @@ public class MapGenerator {
             //PortalCell portal = new PortalCell(-1, map.cells[px][py]);
             PortalCell portal = new PortalCell(i, map.cells[px][py]);
             map.cells[px][py] = portal;
+            map.portalsCount++;
         }
     }
 
@@ -518,16 +547,16 @@ public class MapGenerator {
     }
 
     private void updateConnectedCells(int i, int j, LabyrinthMap map) {
-        if (!map.horizontalBorders[i][j].exists()) {
+        if (map.horizontalBorders[i][j].state() == BorderState.NOTEXISTS) {
             map.cells[i][j].connectedCells.add(new Pair<>(i, j - 1));
         }
-        if (!map.horizontalBorders[i][j + 1].exists()) {
+        if (map.horizontalBorders[i][j + 1].state() == BorderState.NOTEXISTS) {
             map.cells[i][j].connectedCells.add(new Pair<>(i, j + 1));
         }
-        if (!map.verticalBorders[i][j].exists()) {
+        if (map.verticalBorders[i][j].state() == BorderState.NOTEXISTS) {
             map.cells[i][j].connectedCells.add(new Pair<>(i - 1, j));
         }
-        if (!map.verticalBorders[i + 1][j].exists()) {
+        if (map.verticalBorders[i + 1][j].state() == BorderState.NOTEXISTS) {
             map.cells[i][j].connectedCells.add(new Pair<>(i + 1, j));
         }
     }
@@ -713,17 +742,17 @@ public class MapGenerator {
 
     private void deleteVerticalBorderBetween(LabyrinthMap map, int currenty, int currentx, int nextx) throws InterruptedException {
         if (currentx > nextx) {
-            map.verticalBorders[currentx][currenty].myExists = false;
+            map.verticalBorders[currentx][currenty].setState(BorderState.NOTEXISTS);
         } else if (currentx < nextx) {
-            map.verticalBorders[currentx + 1][currenty].myExists = false;
+            map.verticalBorders[currentx + 1][currenty].setState(BorderState.NOTEXISTS);
         }
     }
 
     private void deleteHorizontalBorderBetween(LabyrinthMap map, int currentx, int currenty, int nexty) throws InterruptedException {
         if (currenty > nexty) {
-            map.horizontalBorders[currentx][currenty].myExists = false;
+            map.horizontalBorders[currentx][currenty].setState(BorderState.NOTEXISTS);
         } else if (currenty < nexty) {
-            map.horizontalBorders[currentx][currenty + 1].myExists = false;
+            map.horizontalBorders[currentx][currenty + 1].setState(BorderState.NOTEXISTS);
         }
     }
 

@@ -4,14 +4,20 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Created by Vadim on 09.08.2018.
  */
 public class Minotaur extends MapObject {
     private boolean alive = true;
+    private boolean supposedAlive = true;
 
     public boolean isAlive(){
+        return alive;
+    }
+
+    public boolean isSupposedAlive(){
         return alive;
     }
 
@@ -23,11 +29,11 @@ public class Minotaur extends MapObject {
     @Override
     public void paint(Graphics g, int cellx, int celly) {
         try {
-            File file;
-            if(alive) {
-                file = new File("res/minotaur.png");
+            URL file;
+            if(supposedAlive) {
+                file = getClass().getResource("/minotaur.png");
             } else {
-                file = new File("res/dead_minotaur.png");
+                file = getClass().getResource("/dead_minotaur.png");
             }
             Image img= ImageIO.read(file);
             g.drawImage(img, cellx - 9, celly - 9, null);
@@ -38,5 +44,9 @@ public class Minotaur extends MapObject {
 
     public void kill() {
         alive = false;
+    }
+
+    public void confirmKill(){
+        supposedAlive = alive;
     }
 }

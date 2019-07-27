@@ -36,6 +36,7 @@ public class PortalCell extends Cell {
     public void paint(Graphics g, int cellx, int celly) {
         int radius = (MapPanel.cellWidth*2)/6;
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(Color.BLACK);
         g2d.drawOval(cellx - radius, celly - radius, 2*radius, 2*radius);
         g2d.fill(new Ellipse2D.Double(cellx - radius, celly - radius, 2*radius, 2*radius));
         g2d.setColor(Color.WHITE);

@@ -14,6 +14,10 @@ public class LabyrinthMap {
     int exitx = -1;
     int exity = -1;
 
+    int minotaursCount = 0;
+    int aliveMinotaursCount = 0;
+    int portalsCount = 0;
+
     Cell[][] cells;
     VerticalBorder[][] verticalBorders;
     HorizontalBorder[][] horizontalBorders;
@@ -33,13 +37,13 @@ public class LabyrinthMap {
 
         for(int i = 0; i < width+1; ++i){
             for(int j = 0; j < height; ++j){
-                verticalBorders[i][j] = new VerticalBorder(true);
+                verticalBorders[i][j] = new VerticalBorder(BorderState.EXISTS);
             }
         }
 
         for(int i = 0; i < width; ++i){
             for(int j = 0; j < height+1; ++j){
-                horizontalBorders[i][j] = new HorizontalBorder(true);
+                horizontalBorders[i][j] = new HorizontalBorder(BorderState.EXISTS);
             }
         }
     }
