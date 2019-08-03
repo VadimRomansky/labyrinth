@@ -10,12 +10,14 @@ import java.util.Vector;
  * Created by Vadim on 24.07.2018.
  */
 enum CellType { SIMPLE_CELL, ARSENAL, HOSPITAL, PORTAL}
+enum CellState {UNDEFINED, VISITED}
 
 public class Cell {
     int x;
     int y;
     int setId;
     CellType type;
+    CellState state;
     Vector<Pair<Integer, Integer>> connectedCells;
 
     Vector<MapObject> characters;
@@ -28,6 +30,7 @@ public class Cell {
         connectedCells = new Vector<>();
         characters = new Vector<>();
         type = CellType.SIMPLE_CELL;
+        state = CellState.UNDEFINED;
     }
 
     public  void print(){
@@ -40,7 +43,7 @@ public class Cell {
         FontMetrics fm = g2d.getFontMetrics();
         int textWidth = fm.stringWidth(text);
         int textHeight = fm.getHeight();
-        g2d.drawString(text, cellx - textWidth/2, celly -  textHeight/2 + fm.getAscent());
+        //g2d.drawString(text, cellx - textWidth/2, celly -  textHeight/2 + fm.getAscent());
         paintObjects(g, cellx, celly);
     }
 

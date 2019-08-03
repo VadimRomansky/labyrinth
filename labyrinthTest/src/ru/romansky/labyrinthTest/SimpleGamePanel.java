@@ -516,8 +516,8 @@ public class SimpleGamePanel extends MapPanelBase {
         textPosition = 0;
     }
 
-    public void setTextArea(JTextArea simpleGameTextArea) {
-        myTextArea = simpleGameTextArea;
+    public void setTextArea(JTextArea textArea) {
+        myTextArea = textArea;
         textPosition = 0;
     }
 }

@@ -8,6 +8,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Locale;
 
+enum MainWindowMode {MENU, OPTIONS, HELP, GENERATOR, STARTGAME, SIMPLEGAME, CLASSICGAME};
+
 public class NewMainWindow {
     private JFrame myFrame;
     private CardLayout myLayout;
@@ -66,6 +68,11 @@ public class NewMainWindow {
     private JButton classicGameExitButton;
     private JTextArea simpleGameTextArea;
     private JScrollPane simpleGameTextScrollPane;
+    private JTextArea classicGameTextArea;
+    private JScrollPane classicGameTextScrollPane;
+    private JList miniMapList;
+
+    private MainWindowMode myMode;
 
     public NewMainWindow(){
         mainPanel.removeAll();
@@ -77,6 +84,8 @@ public class NewMainWindow {
         mainPanel.add(simpleGamePanel,"simplegame");
         mainPanel.add(classicGamePanel,"classicgame");
         myLayout = (CardLayout) mainPanel.getLayout();
+
+        myMode = MainWindowMode.MENU;
 
         ////menu
         setupMenuPanel();
@@ -120,22 +129,54 @@ public class NewMainWindow {
 
         //simpleGameMapPanel = new MapPanel(myFrame, mainPanel);
         simpleGameMapPanel = new SimpleGamePanel(myFrame, simpleGamePanel);
+        classicGameMapPanel = new ClassicGamePanel(myFrame, classicGamePanel);
         generateMapPanel = new MapPanel(myFrame, generateMapPanel);
-        //simpleGameMapPanel.setFocusable(true);
+
+        miniMapList = new JList<LabyrinthMap>();
+        miniMapList.setFixedCellHeight(-1);
+        ListCellRenderer<LabyrinthMap> listRender = new ListCellRenderer<LabyrinthMap>() {
+
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<? extends LabyrinthMap> list, LabyrinthMap value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+
+                JPanel panel = new MiniMapPanel(value);
+                panel.setBackground(Color.WHITE);
+                int hight = (value.height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
+                panel.setBounds(0, 0, miniMapList.getWidth() - 20, hight);
+                panel.setPreferredSize(new Dimension(miniMapList.getWidth() -20, hight));
+                return panel;
+            }
+        };
+        DefaultListModel<LabyrinthMap> listMod = new DefaultListModel<LabyrinthMap>();
+        miniMapList = new JList<LabyrinthMap>(listMod);
+        miniMapList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        miniMapList.setCellRenderer(listRender);
+
         frame.setFocusable( true );
         frame.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 //System.out.println(e.getKeyCode());
-                ((MapPanelBase) simpleGameMapPanel).keyPressed(e);
+                if(myMode == MainWindowMode.SIMPLEGAME) {
+                    ((MapPanelBase) simpleGameMapPanel).keyPressed(e);
+                } else if(myMode == MainWindowMode.CLASSICGAME){
+                    ((MapPanelBase) classicGameMapPanel).keyPressed(e);
+                }
             }
         });
     }
 
     public void show(){
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets scnMax = Toolkit.getDefaultToolkit().getScreenInsets(myFrame.getGraphicsConfiguration());
+        int taskBarSize = scnMax.bottom;
         myFrame.setMinimumSize(new Dimension(600,600));
-        myFrame.setBounds(400,300,600,600);
-        mainPanel.setSize(new Dimension(600, 600));
+        myFrame.setSize(screenSize.width, screenSize.height - taskBarSize);
+        myFrame.setPreferredSize(new Dimension(screenSize.width,screenSize.height - taskBarSize));
+        myFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        //mainPanel.setSize(new Dimension(600, 600));
 
 
 
@@ -151,7 +192,8 @@ public class NewMainWindow {
 
     private void setupSimpleGamePanel() {
         //simpleGamePanel.setSize(600, 500);
-        simpleGameTextScrollPane.setSize(600,200);
+        simpleGameTextScrollPane.setPreferredSize(new Dimension(600, 50));
+        //simpleGameTextScrollPane.revalidate();
         //simpleGameTextArea.setSize(600,100);
         ((SimpleGamePanel)simpleGameMapPanel).setTextArea(simpleGameTextArea);
 
@@ -159,6 +201,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "startgame");
+                myMode = MainWindowMode.STARTGAME;
             }
         });
 
@@ -173,10 +216,15 @@ public class NewMainWindow {
     private void setupClassicGamePanel() {
         //classicGamePanel.setSize(600, 500);
 
+        classicGameTextScrollPane.setPreferredSize(new Dimension(600, 50));
+        ((ClassicGamePanel)classicGameMapPanel).setTextArea(classicGameTextArea);
+        ((ClassicGamePanel)classicGameMapPanel).setMiniMapList(miniMapList, (DefaultListModel<LabyrinthMap>) miniMapList.getModel());
+
         classicGameReturnButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "startgame");
+                myMode = MainWindowMode.STARTGAME;
             }
         });
 
@@ -272,6 +320,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "menu");
+                myMode = MainWindowMode.MENU;
             }
         });
     }
@@ -281,6 +330,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "menu");
+                myMode = MainWindowMode.MENU;
             }
         });
     }
@@ -290,6 +340,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"menu");
+                myMode = MainWindowMode.MENU;
             }
         });
     }
@@ -320,90 +371,9 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myFrame.requestFocus();
-                int width = (Integer) sizeComboBox.getItemAt(sizeComboBox.getSelectedIndex());
-                int height = width;
-                int difficulty = difficultyComboBox.getSelectedIndex();
-
-                double stopP = 0;
-                double branchP = 0;
-                int minSize = 2;
-                int maxRegions = 1;
-                boolean allowCycle = false;
-                boolean stopAfterCycle = false;
-
-                switch (difficulty){
-                    case 1:
-                        stopP = 0.1;
-                        branchP = 0.05;
-                        minSize = 2*width;
-                        maxRegions = (width*2)/3;
-                        allowCycle = true;
-                        stopAfterCycle = true;
-                        break;
-                    case 2:
-                        stopP = 0.1;
-                        branchP = 0.1;
-                        minSize = width*height/5;
-                        maxRegions = (width*2)/3;
-                        allowCycle = true;
-                        stopAfterCycle = false;
-                        break;
-                    case 3:
-                        stopP = 0.05;
-                        branchP = 0.2;
-                        minSize = width*height/5;
-                        maxRegions = width/2;
-                        allowCycle = true;
-                        stopAfterCycle = false;
-                        break;
-                    default:
-                        stopP = 0.2;
-                        branchP = 0.01;
-                        minSize = width;
-                        maxRegions = width;
-                        allowCycle = false;
-                        stopAfterCycle = false;
-                        break;
-                }
-
-                int portals = 0;
-                int portalsType = startPortalsComboBox.getSelectedIndex();
-                switch (portalsType){
-                    case 1:
-                        portals = width/2 + width*height/20;
-                        break;
-                    case 2:
-                        portals = width/2 + width*height/10;
-                        break;
-                    default:
-                        portals = width/2 + 1;
-                        break;
-                }
-
-                int minotaurs = 0;
-
-                int minotaursType = startMinotaursComboBox.getSelectedIndex();
-                switch (minotaursType){
-                    case 1: minotaurs = width*height/12;
-                        break;
-                    case 2: minotaurs = width*height/9;
-                        break;
-                    case 3: minotaurs = width*height/6;
-                        break;
-                    case 4: minotaurs = width*height/3;
-                        break;
-                    default: minotaurs = 0;
-                        break;
-                }
-
+                MapGeneratorInfo mapGeneratorInfo = collectGeneratorInfo();
                 try {
-
-                    if(stopP < 0.0 || stopP > 1.0){
-
-                    } else if(branchP < 0.0 || branchP > 1.0){
-
-                    } else {
-                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, (MapPanelBase) simpleGameMapPanel);
+                        MapGenerator mapGenerator = new MapGenerator(mapGeneratorInfo, (MapPanelBase) simpleGameMapPanel);
                         final LabyrinthMap map = mapGenerator.generateEmptyMap();
                         mapGenerator.generateMap(map);
                         ((MapPanelBase) simpleGameMapPanel).resetMap(map);
@@ -411,7 +381,7 @@ public class NewMainWindow {
 
                         //map.print();
                         simpleGameMapPanel.repaint();
-                    }
+
                 } catch (NumberFormatException ne){
 
                 } catch (InterruptedException e1) {
@@ -420,6 +390,7 @@ public class NewMainWindow {
 
 
                 myLayout.show(mainPanel,"simplegame");
+                myMode = MainWindowMode.SIMPLEGAME;
                 myFrame.requestFocus();
             }
         });
@@ -427,7 +398,25 @@ public class NewMainWindow {
         startClassicButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                myFrame.requestFocus();
+                MapGeneratorInfo mapGeneratorInfo = collectGeneratorInfo();
+                try {
+                    MapGenerator mapGenerator = new MapGenerator(mapGeneratorInfo, (MapPanelBase) classicGameMapPanel);
+                    final LabyrinthMap map = mapGenerator.generateEmptyMap();
+                    mapGenerator.generateMap(map);
+                    ((MapPanelBase) classicGameMapPanel).resetMap(map);
+                    ((ClassicGamePanel) classicGameMapPanel).restart();
+
+                    //map.print();
+                    classicGameMapPanel.repaint();
+
+                } catch (NumberFormatException ne){
+
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
                 myLayout.show(mainPanel, "classicgame");
+                myMode = MainWindowMode.CLASSICGAME;
                 myFrame.requestFocus();
             }
         });
@@ -436,8 +425,87 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"menu");
+                myMode = MainWindowMode.MENU;
             }
         });
+    }
+
+    public MapGeneratorInfo collectGeneratorInfo() {
+        MapGeneratorInfo info = new MapGeneratorInfo();
+        info.width = (Integer) sizeComboBox.getItemAt(sizeComboBox.getSelectedIndex());
+        info.height = info.width;
+
+
+        int difficulty = difficultyComboBox.getSelectedIndex();
+        switch (difficulty) {
+            case 1:
+                info.stopP = 0.1;
+                info.branchP = 0.05;
+                info.minSize = 2 * info.width;
+                info.maxRegions = (info.width * 2) / 3;
+                info.allowCycle = true;
+                info.stopAfterCycle = true;
+                break;
+            case 2:
+                info.stopP = 0.1;
+                info.branchP = 0.1;
+                info.minSize = info.width * info.height / 5;
+                info.maxRegions = (info.width * 2) / 3;
+                info.allowCycle = true;
+                info.stopAfterCycle = false;
+                break;
+            case 3:
+                info.stopP = 0.05;
+                info.branchP = 0.2;
+                info.minSize = info.width * info.height / 5;
+                info.maxRegions = info.width / 2;
+                info.allowCycle = true;
+                info.stopAfterCycle = false;
+                break;
+            default:
+                info.stopP = 0.2;
+                info.branchP = 0.01;
+                info.minSize = info.width;
+                info.maxRegions = info.width;
+                info.allowCycle = false;
+                info.stopAfterCycle = false;
+                break;
+        }
+
+
+        int portalsType = startPortalsComboBox.getSelectedIndex();
+        switch (portalsType) {
+            case 1:
+                info.portals = info.width / 2 + info.width * info.height / 20;
+                break;
+            case 2:
+                info.portals = info.width / 2 + info.width * info.height / 10;
+                break;
+            default:
+                info.portals = info.width / 2 + 1;
+                break;
+        }
+
+
+        int minotaursType = startMinotaursComboBox.getSelectedIndex();
+        switch (minotaursType) {
+            case 1:
+                info.minotaurs = info.width * info.height / 12;
+                break;
+            case 2:
+                info.minotaurs = info.width * info.height / 9;
+                break;
+            case 3:
+                info.minotaurs = info.width * info.height / 6;
+                break;
+            case 4:
+                info.minotaurs = info.width * info.height / 3;
+                break;
+            default:
+                info.minotaurs = 0;
+                break;
+        }
+        return info;
     }
 
     private void setupMenuPanel() {
@@ -445,6 +513,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"startgame");
+                myMode = MainWindowMode.STARTGAME;
             }
         });
 
@@ -452,6 +521,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"generate");
+                myMode = MainWindowMode.GENERATOR;
             }
         });
 
@@ -459,6 +529,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"options");
+                myMode = MainWindowMode.OPTIONS;
             }
         });
 
@@ -466,6 +537,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel,"help");
+                myMode = MainWindowMode.HELP;
             }
         });
 

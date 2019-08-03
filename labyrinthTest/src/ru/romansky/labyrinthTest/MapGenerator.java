@@ -32,7 +32,7 @@ public class MapGenerator {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
-        //randomSeed = 12;
+        randomSeed = 85779687;
         random.setSeed(randomSeed);
         System.out.print("random seed = ");
         System.out.print(randomSeed);
@@ -49,6 +49,29 @@ public class MapGenerator {
         minotaurusCount = minotaurs;
         portalsCount = portals;
         maxRegionsCount = maxRegions;
+    }
+
+    public MapGenerator(MapGeneratorInfo info, MapPanelBase mapPanel){
+        myMapPanel = mapPanel;
+        random = new Random();
+        randomSeed = random.nextInt();
+        //randomSeed = 12;
+        random.setSeed(randomSeed);
+        System.out.print("random seed = ");
+        System.out.print(randomSeed);
+        System.out.println();
+        moles = new Stack<Mole>();
+        height = info.height;
+        width = info.width;
+        visited = new int[width][height];
+        minRegionSize = info.minSize;
+        stopProbability = info.stopP;
+        branchingProbability = info.branchP;
+        allowCycles = info.allowCycle;
+        stopAfterCycle = info.stopAfterCycle;
+        minotaurusCount = info.minotaurs;
+        portalsCount = info.portals;
+        maxRegionsCount = info.maxRegions;
     }
 
     public LabyrinthMap generateEmptyMap() {

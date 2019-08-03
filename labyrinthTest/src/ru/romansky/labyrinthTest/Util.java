@@ -1,10 +1,79 @@
 package ru.romansky.labyrinthTest;
 
+import com.sun.javafx.scene.control.skin.LabeledImpl;
 import javafx.util.Pair;
 
 import java.util.*;
 
 public class Util {
+    public static boolean mapFiting(LabyrinthMap mainMap, LabyrinthMap additionalMap, int shiftX, int shiftY){
+        for(int i = 0; i < additionalMap.width+1; ++i){
+            for(int j = 0; j < additionalMap.height; ++i){
+                if(!wallFitting(mainMap.verticalBorders[i+shiftX][j+shiftY],additionalMap.verticalBorders[i][j])){
+                    return false;
+                }
+            }
+        }
+
+        for(int i = 0; i < additionalMap.width; ++i){
+            for(int j = 0; j < additionalMap.height+1; ++i){
+                if(!wallFitting(mainMap.horizontalBorders[i+shiftX][j+shiftY],additionalMap.horizontalBorders[i][j])){
+                    return false;
+                }
+            }
+        }
+
+        for(int i = 0; i < additionalMap.width; ++i){
+            for(int j = 0; j < additionalMap.height; ++i){
+                if(!cellFitting(mainMap.cells[i+shiftX][j + shiftY], additionalMap.cells[i][j])){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean cellFitting(Cell mainCell, Cell additionalCell) {
+        if(mainCell.state == CellState.UNDEFINED){
+            return true;
+        }
+        if(additionalCell.state == CellState.UNDEFINED){
+            return true;
+        }
+        if(mainCell.type != additionalCell.type){
+            return false;
+        }
+        if(mainCell.minotaur != null){
+            if(additionalCell.minotaur == null){
+                return false;
+            }
+            if(mainCell.minotaur.isAlive()){
+                if(!additionalCell.minotaur.isAlive()){
+                    return false;
+                }
+            }
+            return true;
+        }
+        if(additionalCell.minotaur != null){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean wallFitting(Border mainBorder, Border additionalBorder) {
+        if(mainBorder.state() == BorderState.UNDEFINED){
+            return true;
+        }
+        if(additionalBorder.state() == BorderState.UNDEFINED){
+            return true;
+        }
+        if(mainBorder.state() == additionalBorder.state()){
+            return true;
+        }
+        return false;
+    }
+
+
     public static int[][] EvaluateDistancesBFS(LabyrinthMap map, int starti, int startj, boolean checkMinotaurs, boolean direction, Pair<Integer, Integer>[][] parents){
         int[][] result = new int[map.width][map.height];
         int totalCount = map.width*map.height;

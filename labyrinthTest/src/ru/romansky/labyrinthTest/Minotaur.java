@@ -13,6 +13,15 @@ public class Minotaur extends MapObject {
     private boolean alive = true;
     private boolean supposedAlive = true;
 
+    public Minotaur(){
+
+    }
+
+    public Minotaur(Minotaur minotaur) {
+        alive = minotaur.alive;
+        supposedAlive = minotaur.supposedAlive;
+    }
+
     public boolean isAlive(){
         return alive;
     }
