@@ -44,7 +44,7 @@ public class PortalCell extends Cell {
         FontMetrics fm = g2d.getFontMetrics();
         int textWidth = fm.stringWidth(text);
         int textHeight = fm.getHeight();
-        g2d.drawString(text, cellx - textWidth/2, celly -  textHeight/2 + fm.getAscent());
+        //g2d.drawString(text, cellx - textWidth/2, celly -  textHeight/2 + fm.getAscent());
         g2d.setColor(Color.BLACK);
         paintObjects(g, cellx, celly);
     }

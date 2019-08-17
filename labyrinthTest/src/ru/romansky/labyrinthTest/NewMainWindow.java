@@ -1,11 +1,10 @@
 package ru.romansky.labyrinthTest;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Locale;
 
 enum MainWindowMode {MENU, OPTIONS, HELP, GENERATOR, STARTGAME, SIMPLEGAME, CLASSICGAME};
@@ -70,7 +69,7 @@ public class NewMainWindow {
     private JScrollPane simpleGameTextScrollPane;
     private JTextArea classicGameTextArea;
     private JScrollPane classicGameTextScrollPane;
-    private JList miniMapList;
+    private JScrollPane miniMapScrollPane;
 
     private MainWindowMode myMode;
 
@@ -132,27 +131,118 @@ public class NewMainWindow {
         classicGameMapPanel = new ClassicGamePanel(myFrame, classicGamePanel);
         generateMapPanel = new MapPanel(myFrame, generateMapPanel);
 
-        miniMapList = new JList<LabyrinthMap>();
-        miniMapList.setFixedCellHeight(-1);
-        ListCellRenderer<LabyrinthMap> listRender = new ListCellRenderer<LabyrinthMap>() {
+        /*ListCellRenderer<MiniMapPanel> listRender = new ListCellRenderer<MiniMapPanel>() {
 
             @Override
             public Component getListCellRendererComponent(
-                    JList<? extends LabyrinthMap> list, LabyrinthMap value, int index,
+                    JList<? extends MiniMapPanel> list, MiniMapPanel value, int index,
                     boolean isSelected, boolean cellHasFocus) {
 
-                JPanel panel = new MiniMapPanel(value);
-                panel.setBackground(Color.WHITE);
-                int hight = (value.height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
-                panel.setBounds(0, 0, miniMapList.getWidth() - 20, hight);
-                panel.setPreferredSize(new Dimension(miniMapList.getWidth() -20, hight));
-                return panel;
+                value.setBackground(Color.WHITE);
+                int hight = (value.getMap().height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
+                value.setBounds(0, 0, miniMapList.getWidth() - 20, hight);
+                value.setPreferredSize(new Dimension(miniMapList.getWidth() -20, hight));
+                //panel.addMouseListener(new MiniMapMouseListener((ClassicGamePanel) classicGameMapPanel, value));
+                return value;
             }
-        };
-        DefaultListModel<LabyrinthMap> listMod = new DefaultListModel<LabyrinthMap>();
-        miniMapList = new JList<LabyrinthMap>(listMod);
-        miniMapList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        miniMapList.setCellRenderer(listRender);
+        };*/
+
+
+        /*miniMapList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                myFrame.requestFocus();
+                MiniMapPanel map = (MiniMapPanel) miniMapList.getSelectedValue();
+                if(map != null) {
+                    ((ClassicGamePanel) classicGameMapPanel).setDragMiniMap(map.getMap());
+                }
+            }
+        });*/
+
+        /*miniMapList.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int x = e.getX();
+                int y = e.getY();
+                int index = miniMapList.getSelectedIndex();
+                Rectangle bounds = miniMapList.getCellBounds(index, index);
+                if (null != bounds && bounds.contains(x, y)) {
+                    MiniMapPanel map = (MiniMapPanel) miniMapList.getSelectedValue();
+                    if(map != null) {
+                        Point point = e.getPoint();
+                        if(map.mouseOnSplitButton(point)){
+
+                        } else if(map.mouseOnDeleteButton(point)){
+                            ((ClassicGamePanel) classicGameMapPanel).stopDragMiniMap();
+                            ((ClassicGamePanel) classicGameMapPanel).removeMiniMap(map);
+                        } else {
+                            ((ClassicGamePanel) classicGameMapPanel).setDragMiniMap(map.getMap());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });*/
+
+        classicGameMapPanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(SwingUtilities.isRightMouseButton(e)){
+                    if(myMode == MainWindowMode.CLASSICGAME) {
+                        ((ClassicGamePanel) classicGameMapPanel).stopDragMiniMap();
+                        return;
+                    }
+                }
+                if(SwingUtilities.isLeftMouseButton(e)) {
+                    if(myMode == MainWindowMode.CLASSICGAME){
+                        ClassicGamePanel classicGamePanel = (ClassicGamePanel) classicGameMapPanel;
+                        if(classicGamePanel.isDragMiniMap()){
+                            Point point = e.getPoint();
+                            classicGamePanel.tryAddMiniMap(point);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
 
         frame.setFocusable( true );
         frame.addKeyListener(new KeyAdapter() {
@@ -185,8 +275,15 @@ public class NewMainWindow {
         myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         myFrame.pack();
         Locale.setDefault(Locale.UK);
+        //todo exit
+        Timer timer = new Timer(20, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myFrame.repaint();
+            }
+        });
         myFrame.setVisible(true);
-
+        timer.start();
 
     }
 
@@ -218,7 +315,7 @@ public class NewMainWindow {
 
         classicGameTextScrollPane.setPreferredSize(new Dimension(600, 50));
         ((ClassicGamePanel)classicGameMapPanel).setTextArea(classicGameTextArea);
-        ((ClassicGamePanel)classicGameMapPanel).setMiniMapList(miniMapList, (DefaultListModel<LabyrinthMap>) miniMapList.getModel());
+        ((ClassicGamePanel)classicGameMapPanel).setMiniMapScrollPane(miniMapScrollPane);
 
         classicGameReturnButton.addActionListener(new ActionListener() {
             @Override

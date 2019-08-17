@@ -9,6 +9,10 @@ public class VerticalBorder extends  Border {
         super(state);
     }
 
+    public VerticalBorder(VerticalBorder verticalBorder) {
+        super(verticalBorder.state());
+    }
+
     @Override
     public void print(){
         if(myState == BorderState.EXISTS){

@@ -6,9 +6,104 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class Util {
+    public static LabyrinthMap compressListToOne(List<LabyrinthMap> mapList) throws Exception {
+        if(mapList == null || mapList.size() == 0){
+            return null;
+        }
+        LabyrinthMap newMap = new LabyrinthMap(mapList.get(0).width, mapList.get(0).height, BorderState.UNDEFINED);
+        int width = newMap.width;
+        int height = newMap.height;
+        Iterator<LabyrinthMap> iterator = mapList.iterator();
+        while(iterator.hasNext()){
+            LabyrinthMap map = iterator.next();
+            for(int i = 0; i <= width; ++i){
+                for(int j = 0; j < height; ++j) {
+                    if (map.verticalBorders[i][j].state() != BorderState.UNDEFINED){
+                        if(newMap.verticalBorders[i][j].state() == BorderState.UNDEFINED) {
+                            newMap.verticalBorders[i][j].setState(map.verticalBorders[i][j].state());
+                        }else if(newMap.verticalBorders[i][j].state() != map.verticalBorders[i][j].state()){
+                            throw new Exception("Maps' vertical borders are in conflict");
+                        }
+                    }
+                }
+            }
+
+            for(int i = 0; i < width; ++i){
+                for(int j = 0; j <= height; ++j) {
+                    if (map.horizontalBorders[i][j].state() != BorderState.UNDEFINED){
+                        if(newMap.horizontalBorders[i][j].state() == BorderState.UNDEFINED) {
+                            newMap.horizontalBorders[i][j].setState(map.horizontalBorders[i][j].state());
+                        }else if(newMap.horizontalBorders[i][j].state() != map.horizontalBorders[i][j].state()){
+                            throw new Exception("Maps' horizontal borders are in conflict");
+                        }
+                    }
+                }
+            }
+
+            for(int i = 0; i < width; ++i){
+                for(int j = 0; j < height; ++j){
+                    if(map.cells[i][j].state == CellState.VISITED){
+                        if(newMap.cells[i][j].state == CellState.UNDEFINED){
+                            if(map.cells[i][j].type == CellType.ARSENAL){
+                                newMap.cells[i][j] = new ArsenalCell(i,j, 0);
+                            }
+                            if(map.cells[i][j].type == CellType.HOSPITAL){
+                                newMap.cells[i][j] = new HospitalCell(i,j,0);
+                            }
+                            if(map.cells[i][j].type == CellType.PORTAL){
+                                newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i][j]).number,i,j,0);
+                            }
+                            newMap.cells[i][j].state = CellState.VISITED;
+                            if(map.cells[i][j].minotaur != null) {
+                                newMap.cells[i][j].minotaur = new Minotaur(map.cells[i][j].minotaur);
+                            } else {
+                                newMap.cells[i][j].minotaur = null;
+                            }
+                        } else {
+                            if(map.cells[i][j].type != newMap.cells[i][j].type){
+                                throw new Exception("Cell types are in conflict");
+                            }
+                            if(map.cells[i][j].minotaur == null){
+                                if(newMap.cells[i][j].minotaur != null){
+                                    throw new Exception("Minotaurs are in comflict");
+                                }
+                            } else {
+                                if(newMap.cells[i][j].minotaur == null){
+                                    throw new Exception("Minotaurs are in conflict");
+                                } else {
+                                    if(!map.cells[i][j].minotaur.isAlive()){
+                                        newMap.cells[i][j].minotaur.kill();
+                                    }
+                                    if(!map.cells[i][j].minotaur.isSupposedAlive()){
+                                        newMap.cells[i][j].minotaur.confirmKill();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return newMap;
+    }
+
+    public static boolean mapFitingToAll(LabyrinthMap mainMap, List<LabyrinthMap> additionalMaps, LabyrinthMap additionalMap, int shiftX, int shiftY) {
+        if(!mapFiting(mainMap, additionalMap, shiftX, shiftY)){
+            return false;
+        }
+        for (LabyrinthMap map :
+                additionalMaps) {
+            if(!mapFiting(map, additionalMap, shiftX, shiftY)){
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static boolean mapFiting(LabyrinthMap mainMap, LabyrinthMap additionalMap, int shiftX, int shiftY){
         for(int i = 0; i < additionalMap.width+1; ++i){
-            for(int j = 0; j < additionalMap.height; ++i){
+            for(int j = 0; j < additionalMap.height; ++j){
                 if(!wallFitting(mainMap.verticalBorders[i+shiftX][j+shiftY],additionalMap.verticalBorders[i][j])){
                     return false;
                 }
@@ -16,7 +111,7 @@ public class Util {
         }
 
         for(int i = 0; i < additionalMap.width; ++i){
-            for(int j = 0; j < additionalMap.height+1; ++i){
+            for(int j = 0; j < additionalMap.height+1; ++j){
                 if(!wallFitting(mainMap.horizontalBorders[i+shiftX][j+shiftY],additionalMap.horizontalBorders[i][j])){
                     return false;
                 }
@@ -24,7 +119,7 @@ public class Util {
         }
 
         for(int i = 0; i < additionalMap.width; ++i){
-            for(int j = 0; j < additionalMap.height; ++i){
+            for(int j = 0; j < additionalMap.height; ++j){
                 if(!cellFitting(mainMap.cells[i+shiftX][j + shiftY], additionalMap.cells[i][j])){
                     return false;
                 }

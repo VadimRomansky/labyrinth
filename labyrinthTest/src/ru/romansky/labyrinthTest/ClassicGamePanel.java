@@ -3,17 +3,25 @@ package ru.romansky.labyrinthTest;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
+import static java.lang.Thread.sleep;
+
 public class ClassicGamePanel extends MapPanelBase {
+    private boolean dragMiniMap = false;
+    private LabyrinthMap draggedMap;
     private JTextArea myTextArea;
-    private JList<LabyrinthMap> myMiniMapList;
-    private DefaultListModel<LabyrinthMap> myMiniMapListModel;
+    private List<MiniMapPanel> myMiniMapList;
     private int textPosition = 0;
     int stepNumber = 0;
     boolean gameOver = false;
     Character character;
     LabyrinthMap visibleMap;
+    List<LabyrinthMap> additionalMapList;
     int realCharacterx = -1;
     int realCharactery = -1;
     int visibleCharacterx = -1;
@@ -32,12 +40,14 @@ public class ClassicGamePanel extends MapPanelBase {
         myMap = null;
         visibleMap = null;
         setBackground(Color.WHITE);
+        additionalMapList = new LinkedList<>();
     }
     public ClassicGamePanel(JFrame frame, JPanel parent, LabyrinthMap map) {
         this.myFrame = frame;
         this.myParent = parent;
         myMap = map;
         visibleMap = new LabyrinthMap(2*myMap.width-1, 2*myMap.height-1);
+        additionalMapList = new LinkedList<>();
 
         for(int i = 0; i < myMap.width; ++i){
             for(int j = 0; j < myMap.height; ++j){
@@ -77,6 +87,7 @@ public class ClassicGamePanel extends MapPanelBase {
                 visibleMap.horizontalBorders[i][j].setState(BorderState.UNDEFINED);
             }
         }
+
     }
 
     public void resetMap(LabyrinthMap map){
@@ -124,6 +135,7 @@ public class ClassicGamePanel extends MapPanelBase {
     }
 
     public void resetVisibleMap(){
+        additionalMapList.clear();
         visibleMap = new LabyrinthMap(2*myMap.width-1, 2*myMap.height-1);
 
 
@@ -277,7 +289,9 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(objects);
             visibleMap.cells[visibleCharacterx][visibleCharactery].minotaur = myMap.cells[realCharacterx][realCharactery].minotaur;
+            revalidate();
             repaint();
+            myFrame.revalidate();
             eventAfterMove(text);
             repaint();
         } else if(checkVictory(direction, realCharacterx, realCharactery)) {
@@ -384,6 +398,16 @@ public class ClassicGamePanel extends MapPanelBase {
         if(myMap.cells[realCharacterx][realCharactery].minotaur != null){
             //visibleMap.cells[characterx][charactery].minotaur = myMap.cells[characterx][charactery].minotaur;
             if(myMap.cells[realCharacterx][realCharactery].minotaur.isAlive()){
+                /*try {
+                    wait(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
+                /*try {
+                    sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
                 visibleMap.cells[visibleCharacterx][visibleCharactery].characters.removeElement(character);
                 realCharacterx = myMap.hospitalx;
                 realCharactery = myMap.hospitaly;
@@ -464,12 +488,101 @@ public class ClassicGamePanel extends MapPanelBase {
         int minYindex = 0;
         int maxXindex = 0;
         int maxYindex = 0;
-        for(int i = 0; i < visibleMap.width; ++i){
+        IndexContainer index = defineMinMaxIndex(visibleMap);
+        minXindex = index.minXindex;
+        maxXindex = index.maxXindex;
+        minYindex = index.minYindex;
+        maxYindex = index.maxYindex;
+
+        if(additionalMapList.size() > 0){
+            int tempMinXindex = 0;
+            int tempMinYindex = 0;
+            int tempMaxXindex = 0;
+            int tempMaxYindex = 0;
+            for (LabyrinthMap map :
+                    additionalMapList) {
+                index = defineMinMaxIndex(map);
+                tempMinXindex = index.minXindex;
+                tempMaxXindex = index.maxXindex;
+                tempMinYindex = index.minYindex;
+                tempMaxYindex = index.maxYindex;
+
+                if(tempMinXindex < minXindex){
+                    minXindex = tempMinXindex;
+                }
+                if(tempMaxXindex > maxXindex){
+                    maxXindex = tempMaxXindex;
+                }
+                if(tempMinYindex < minYindex){
+                    minYindex = tempMinYindex;
+                }
+                if(tempMaxYindex > maxYindex){
+                    maxYindex = tempMaxYindex;
+                }
+            }
+        }
+
+        int xsize = maxXindex - minXindex + 1;
+        int ysize = maxYindex - minYindex + 1;
+
+        List<LabyrinthMap> miniMapList = copyAllMapsLargeToSmall(visibleMap, additionalMapList, minXindex, minYindex, xsize, ysize);
+
+
+        MiniMapPanel miniMapPanel = new MiniMapPanel(miniMapList);
+        setMouseListener(miniMapPanel);
+        myMiniMapList.add(miniMapPanel);
+    }
+
+    private void setMouseListener(MiniMapPanel miniMapPanel) {
+        miniMapPanel.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Point point = e.getPoint();
+                int x = point.x;
+                int y = point.y;
+                if(miniMapPanel.mouseOnSplitButton(point)){
+
+                } else if(miniMapPanel.mouseOnDeleteButton(point)){
+                    stopDragMiniMap();
+                    myMiniMapList.remove(miniMapPanel);
+                } else {
+
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+    }
+
+    private IndexContainer defineMinMaxIndex(LabyrinthMap map){
+        int minXindex = 0;
+        int maxXindex = 0;
+        int minYindex = 0;
+        int maxYindex = 0;
+        for(int i = 0; i < map.width; ++i){
             boolean minIndexSet = false;
-            for(int j = 0; j < visibleMap.height; ++j){
-                if ((visibleMap.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.cells[i][j].state != CellState.UNDEFINED)) {
+            for(int j = 0; j < map.height; ++j){
+                if ((map.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.cells[i][j].state != CellState.UNDEFINED)) {
                     minIndexSet = true;
                     break;
                 }
@@ -480,12 +593,12 @@ public class ClassicGamePanel extends MapPanelBase {
             }
         }
 
-        for(int j = 0; j < visibleMap.height; ++j){
+        for(int j = 0; j < map.height; ++j){
             boolean minIndexSet = false;
-            for(int i = 0; i < visibleMap.width; ++i){
-                if ((visibleMap.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.cells[i][j].state != CellState.UNDEFINED)) {
+            for(int i = 0; i < map.width; ++i){
+                if ((map.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.cells[i][j].state != CellState.UNDEFINED)) {
                     minIndexSet = true;
                     break;
                 }
@@ -496,80 +609,121 @@ public class ClassicGamePanel extends MapPanelBase {
             }
         }
 
-        for(int i = visibleMap.width - 1; i > 0; --i){
+        for(int i = map.width; i > 0; --i){
             boolean maxIndexSet = false;
-            for(int j = 0; j < visibleMap.height; ++j){
-                if ((visibleMap.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.cells[i][j].state != CellState.UNDEFINED)) {
+            for(int j = 0; j < map.height; ++j){
+                if ((map.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.horizontalBorders[i-1][j].state() != BorderState.UNDEFINED) ||
+                        (map.cells[i-1][j].state != CellState.UNDEFINED)) {
                     maxIndexSet = true;
                     break;
                 }
             }
             if(maxIndexSet){
-                maxXindex = i;
+                maxXindex = i-1;
                 break;
             }
         }
 
-        for(int j = visibleMap.height - 1; j > 0; --j){
+        for(int j = map.height; j > 0; --j){
             boolean maxIndexSet = false;
-            for(int i = 0; i < visibleMap.width; ++i){
-                if ((visibleMap.verticalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
-                        (visibleMap.cells[i][j].state != CellState.UNDEFINED)) {
+            for(int i = 0; i < map.width; ++i){
+                if ((map.verticalBorders[i][j-1].state() != BorderState.UNDEFINED) ||
+                        (map.horizontalBorders[i][j].state() != BorderState.UNDEFINED) ||
+                        (map.cells[i][j-1].state != CellState.UNDEFINED)) {
                     maxIndexSet = true;
                     break;
                 }
             }
             if(maxIndexSet){
-                maxYindex = j;
+                maxYindex = j-1;
                 break;
             }
         }
 
-        int xsize = maxXindex - minXindex + 1;
-        int ysize = maxYindex - minYindex + 1;
-
-        LabyrinthMap miniMap = copyMap(visibleMap, minXindex, minYindex, xsize, ysize);
-
-        myMiniMapListModel.addElement(miniMap);
+        return new IndexContainer(minXindex, maxXindex, minYindex, maxYindex);
     }
 
-    private LabyrinthMap copyMap(LabyrinthMap visibleMap, int minXindex, int minYindex, int xsize, int ysize) {
-        LabyrinthMap map = new LabyrinthMap(xsize, ysize);
+    private LabyrinthMap copyMapLargeToSmall(LabyrinthMap map, int minXindex, int minYindex, int xsize, int ysize) {
+        LabyrinthMap newMap = new LabyrinthMap(xsize, ysize);
+
+        for(int i = 0; i < newMap.width; ++i){
+            for(int j = 0; j < newMap.height + 1; ++j){
+                newMap.horizontalBorders[i][j].setState(map.horizontalBorders[i+minXindex][j + minYindex].state());
+            }
+        }
+
+        for(int i = 0; i < newMap.width + 1; ++i){
+            for(int j = 0; j < newMap.height; ++j){
+                newMap.verticalBorders[i][j].setState(map.verticalBorders[i+minXindex][j+minYindex].state());
+            }
+        }
+
+        for(int i = 0; i < newMap.width; ++i){
+            for(int j = 0; j < newMap.height; ++j){
+                if(map.cells[i+minXindex][j+minYindex].type == CellType.PORTAL){
+                    newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i+minXindex][j+minYindex]).number, i, j, 0);
+                }
+                if(map.cells[i+minXindex][j+minYindex].type == CellType.ARSENAL){
+                    newMap.cells[i][j] = new ArsenalCell(i,j,0);
+                }
+                if(map.cells[i+minXindex][j+minYindex].type == CellType.HOSPITAL){
+                    newMap.cells[i][j] = new HospitalCell(i, j, 0);
+                }
+                if(map.cells[i+minXindex][j+minYindex].minotaur != null){
+                    newMap.cells[i][j].minotaur = new Minotaur(map.cells[i+minXindex][j+minYindex].minotaur);
+                }
+                newMap.cells[i][j].state = map.cells[i+minXindex][j+minYindex].state;
+            }
+        }
+
+        return newMap;
+    }
+
+    private List<LabyrinthMap> copyAllMapsLargeToSmall(LabyrinthMap map, List<LabyrinthMap> mapList, int minXindex, int minYindex, int xsize, int ysize) {
+        List<LabyrinthMap> result = new LinkedList<>();
+        result.add(copyMapLargeToSmall(map, minXindex, minYindex, xsize, ysize));
+        for (LabyrinthMap tempMap :
+                mapList) {
+            result.add(copyMapLargeToSmall(tempMap, minXindex, minYindex, xsize, ysize));
+        }
+        return result;
+    }
+
+    private LabyrinthMap copyMapSmallToLarge(LabyrinthMap map, int minXindex, int minYindex, int xsize, int ysize) {
+        LabyrinthMap newMap = new LabyrinthMap(xsize, ysize, BorderState.UNDEFINED);
 
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height + 1; ++j){
-                map.horizontalBorders[i][j].setState(visibleMap.horizontalBorders[i+minXindex][j + minYindex].state());
+                newMap.horizontalBorders[i + minXindex][j + minYindex].setState(map.horizontalBorders[i][j].state());
             }
         }
 
         for(int i = 0; i < map.width + 1; ++i){
             for(int j = 0; j < map.height; ++j){
-                map.verticalBorders[i][j].setState(visibleMap.verticalBorders[i+minXindex][j+minYindex].state());
+                newMap.verticalBorders[i + minXindex][j + minYindex].setState(map.verticalBorders[i][j].state());
             }
         }
 
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height; ++j){
-                if(visibleMap.cells[i+minXindex][j+minYindex].type == CellType.PORTAL){
-                    map.cells[i][j] = new PortalCell(((PortalCell)visibleMap.cells[i+minXindex][j+minYindex]).number, i, j, 0);
+                if(map.cells[i][j].type == CellType.PORTAL){
+                    newMap.cells[i + minXindex][j + minYindex] = new PortalCell(((PortalCell)map.cells[i][j]).number, i + minXindex, j + minYindex, 0);
                 }
-                if(visibleMap.cells[i+minXindex][j+minYindex].type == CellType.ARSENAL){
-                    map.cells[i][j] = new ArsenalCell(i,j,0);
+                if(map.cells[i][j].type == CellType.ARSENAL){
+                    newMap.cells[i + minXindex][j + minYindex] = new ArsenalCell(i + minXindex,j + minYindex ,0);
                 }
-                if(visibleMap.cells[i+minXindex][j+minYindex].type == CellType.HOSPITAL){
-                    map.cells[i][j] = new HospitalCell(i, j, 0);
+                if(map.cells[i][j].type == CellType.HOSPITAL){
+                    newMap.cells[i + minXindex][j + minYindex] = new HospitalCell(i + minXindex, j + minYindex, 0);
                 }
-                if(visibleMap.cells[i+minXindex][j+minYindex].minotaur != null){
-                    map.cells[i][j].minotaur = new Minotaur(visibleMap.cells[i+minXindex][j+minYindex].minotaur);
+                if(map.cells[i][j].minotaur != null){
+                    newMap.cells[i + minXindex][j + minYindex].minotaur = new Minotaur(map.cells[i][j].minotaur);
                 }
-                map.cells[i][j].state = visibleMap.cells[i+minXindex][j+minYindex].state;
+                newMap.cells[i + minXindex][j + minYindex].state = map.cells[i][j].state;
             }
         }
 
-        return map;
+        return newMap;
     }
 
     public void paint(Graphics g) {
@@ -614,16 +768,29 @@ public class ClassicGamePanel extends MapPanelBase {
                         int x = leftX + i * cellWidth + (2 * i + 1) * borderWidth / 2;
                         int topy = topY + j * cellWidth + (2 * j + 1) * borderWidth / 2;
                         int downy = topY + (j + 1) * cellWidth + (2 * j + 3) * borderWidth / 2;
+                        boolean wallExists = true;
                         if (visibleMap.verticalBorders[i][j].state() == BorderState.EXISTS) {
                             g.setColor(Color.BLACK);
-                        }
-                        if (visibleMap.verticalBorders[i][j].state() == BorderState.UNDEFINED) {
-                            g.setColor(Color.LIGHT_GRAY);
                         }
                         if (visibleMap.verticalBorders[i][j].state() == BorderState.DOOR) {
                             g.setColor(Color.RED);
                         }
-                        g.drawLine(x, topy, x, downy);
+                        if (visibleMap.verticalBorders[i][j].state() == BorderState.UNDEFINED) {
+                            g.setColor(Color.LIGHT_GRAY);
+                            for (LabyrinthMap map :
+                                    additionalMapList) {
+                                if(map.verticalBorders[i][j].state() == BorderState.EXISTS){
+                                    g.setColor(Color.BLUE);
+                                }
+                                if(map.verticalBorders[i][j].state() == BorderState.NOTEXISTS){
+                                    g.setColor(Color.BLUE);
+                                    wallExists = false;
+                                }
+                            }
+                        }
+                        if(wallExists) {
+                            g.drawLine(x, topy, x, downy);
+                        }
                     }
                 }
             }
@@ -633,16 +800,29 @@ public class ClassicGamePanel extends MapPanelBase {
                         int y = topY + j * cellWidth + (2 * j + 1) * borderWidth / 2;
                         int leftx = leftX + i * cellWidth + (2 * i + 1) * borderWidth / 2;
                         int rightx = leftX + (i + 1) * cellWidth + (2 * i + 3) * borderWidth / 2;
+                        boolean wallExists = true;
                         if (visibleMap.horizontalBorders[i][j].state() == BorderState.EXISTS) {
                             g.setColor(Color.BLACK);
-                        }
-                        if (visibleMap.horizontalBorders[i][j].state() == BorderState.UNDEFINED) {
-                            g.setColor(Color.LIGHT_GRAY);
                         }
                         if (visibleMap.horizontalBorders[i][j].state() == BorderState.DOOR) {
                             g.setColor(Color.RED);
                         }
-                        g.drawLine(leftx, y, rightx, y);
+                        if (visibleMap.horizontalBorders[i][j].state() == BorderState.UNDEFINED) {
+                            g.setColor(Color.LIGHT_GRAY);
+                            for (LabyrinthMap map :
+                                    additionalMapList) {
+                                if(map.horizontalBorders[i][j].state() == BorderState.EXISTS){
+                                    g.setColor(Color.BLUE);
+                                }
+                                if(map.horizontalBorders[i][j].state() == BorderState.NOTEXISTS){
+                                    g.setColor(Color.BLUE);
+                                    wallExists = false;
+                                }
+                            }
+                        }
+                        if(wallExists) {
+                            g.drawLine(leftx, y, rightx, y);
+                        }
                     }
                 }
             }
@@ -651,7 +831,17 @@ public class ClassicGamePanel extends MapPanelBase {
                 for (int j = 0; j < visibleMap.height; ++j) {
                     int cellx = leftX + (2*i+1)*cellWidth/2 + i*borderWidth;
                     int celly = topY + (2*j+1)*cellWidth/2 + j*borderWidth;
-                    paintCell(g, cellx, celly, visibleMap.cells[i][j]);
+                    if(visibleMap.cells[i][j].state == CellState.VISITED) {
+                        paintCell(g, cellx, celly, visibleMap.cells[i][j]);
+                    } else {
+                        for (LabyrinthMap map :
+                                additionalMapList) {
+                            if(map.cells[i][j].state == CellState.VISITED){
+                                paintCell(g, cellx, celly, map.cells[i][j]);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
             g.setColor(Color.BLACK);
@@ -668,8 +858,135 @@ public class ClassicGamePanel extends MapPanelBase {
                 g.setFont(smallFont);
                 g.setColor(Color.BLACK);
             }
+
+            if(dragMiniMap){
+                drawMiniMap(g);
+            }
         }
         //super.paint(g);
+    }
+
+    private void drawMiniMap(Graphics g) {
+        Point point = MouseInfo.getPointerInfo().getLocation();
+        int mousex = point.x;
+        int mousey = point.y;
+
+        int width = getWidth();
+        int height = getHeight();
+        int centerx = width/2;
+        int centery = height/2;
+        int mainLeftX = centerx - visibleMap.width*cellWidth/2 - (visibleMap.width + 1)*borderWidth/2;
+        int mainTopY = centery - visibleMap.height*cellWidth/2 - (visibleMap.height + 1)*borderWidth/2;
+        int mainRightX = centerx + visibleMap.width*cellWidth/2 + (visibleMap.width + 1)*borderWidth/2;
+        int mainBottomY = centery + visibleMap.height*cellWidth/2 + (visibleMap.height + 1)*borderWidth/2;
+
+        int leftX = mousex - draggedMap.width*cellWidth/2 - (draggedMap.width + 1)*borderWidth/2;
+        int topY = mousey - draggedMap.height*cellWidth/2 - (draggedMap.height + 1)*borderWidth/2;
+        int rightX = mousex + draggedMap.width*cellWidth/2 + (draggedMap.width + 1)*borderWidth/2;
+        int bottomY = mousey + draggedMap.height*cellWidth/2 + (draggedMap.height + 1)*borderWidth/2;
+
+        boolean isPinned = false;
+        int shiftX = 0;
+        int shiftY = 0;
+        if(leftX >= mainLeftX && rightX <= mainRightX && topY >= mainTopY && bottomY <= mainBottomY){
+
+            int xn = (leftX - mainLeftX)/(cellWidth + borderWidth);
+            int modx = (leftX - mainLeftX)%(cellWidth + borderWidth);
+            int yn = (topY - mainTopY)/(cellWidth + borderWidth);
+            int mody = (topY - mainTopY)%(cellWidth + borderWidth);
+
+            if((modx < cellWidth/5 || modx > (cellWidth*4)/5) && (mody < cellWidth/5 || mody > (cellWidth*4)/5)) {
+                isPinned = true;
+                if (modx < cellWidth / 5) {
+                    leftX = mainLeftX + xn * cellWidth + (2 * xn + 1) * borderWidth / 2;
+                    shiftX = xn;
+                } else if (modx > (cellWidth * 4) / 5) {
+                    leftX = mainLeftX + (xn + 1) * cellWidth + (2 * xn + 3) * borderWidth / 2;
+                    shiftX = xn + 1;
+                }
+
+                if (mody < cellWidth / 5) {
+                    topY = mainTopY + yn * cellWidth + (2 * yn + 1) * borderWidth / 2;
+                    shiftY = yn;
+                } else if (mody > (cellWidth * 4) / 5) {
+                    topY = mainTopY + (yn + 1) * cellWidth + (2 * yn + 3) * borderWidth / 2;
+                    shiftY = yn + 1;
+                }
+            }
+        }
+
+
+
+        ///draw inner cell borders
+            /*g.setColor(Color.WHITE);
+            for(int i = 1; i < myMap.width; ++i){
+                int tempX = leftX + i*cellWidth + (2*i + 1)*borderWidth/2;
+                g.drawLine(tempX, topY, tempX, bottomY);
+            }
+            for(int j = 1; j < myMap.width; ++j) {
+                int tempY = topY + j*cellWidth + (2*j + 1)*borderWidth/2;
+                g.drawLine(leftX, tempY, rightX, tempY);
+            }*/
+        g.setColor(Color.GRAY);
+
+        ///draw outer borders
+            /*g.drawLine(leftX, topY, rightX, topY);
+            g.drawLine(rightX, topY, rightX, bottomY);
+            g.drawLine(rightX, bottomY, leftX, bottomY);
+            g.drawLine(leftX, bottomY, leftX, topY);*/
+
+        g.setColor(Color.BLACK);
+
+        boolean match = false;
+        if(isPinned){
+            match = Util.mapFitingToAll(visibleMap, additionalMapList, draggedMap, shiftX, shiftY);
+        }
+
+        ///draw walls
+        for(int i = 0; i < draggedMap.width+1; ++i) {
+            for (int j = 0; j < draggedMap.height; ++j) {
+                if (draggedMap.verticalBorders[i][j].state() != BorderState.NOTEXISTS) {
+                    int x = leftX + i * cellWidth + (2 * i + 1) * borderWidth / 2;
+                    int topy = topY + j * cellWidth + (2 * j + 1) * borderWidth / 2;
+                    int downy = topY + (j + 1) * cellWidth + (2 * j + 3) * borderWidth / 2;
+                    if (draggedMap.verticalBorders[i][j].state() == BorderState.EXISTS) {
+                        g.setColor(Color.BLACK);
+                        if(match){
+                            g.setColor(Color.GREEN);
+                        }
+                    }
+                    if (draggedMap.verticalBorders[i][j].state() == BorderState.UNDEFINED) {
+                        g.setColor(Color.LIGHT_GRAY);
+                    }
+                    if (draggedMap.verticalBorders[i][j].state() == BorderState.DOOR) {
+                        g.setColor(Color.RED);
+                    }
+                    g.drawLine(x, topy, x, downy);
+                }
+            }
+        }
+        for(int i = 0; i < draggedMap.width; ++i) {
+            for (int j = 0; j < draggedMap.height + 1; ++j) {
+                if (draggedMap.horizontalBorders[i][j].state() != BorderState.NOTEXISTS) {
+                    int y = topY + j * cellWidth + (2 * j + 1) * borderWidth / 2;
+                    int leftx = leftX + i * cellWidth + (2 * i + 1) * borderWidth / 2;
+                    int rightx = leftX + (i + 1) * cellWidth + (2 * i + 3) * borderWidth / 2;
+                    if (draggedMap.horizontalBorders[i][j].state() == BorderState.EXISTS) {
+                        g.setColor(Color.BLACK);
+                        if(match){
+                            g.setColor(Color.GREEN);
+                        }
+                    }
+                    if (draggedMap.horizontalBorders[i][j].state() == BorderState.UNDEFINED) {
+                        g.setColor(Color.LIGHT_GRAY);
+                    }
+                    if (draggedMap.horizontalBorders[i][j].state() == BorderState.DOOR) {
+                        g.setColor(Color.RED);
+                    }
+                    g.drawLine(leftx, y, rightx, y);
+                }
+            }
+        }
     }
 
     private void paintInfoText(Graphics g) {
@@ -693,7 +1010,10 @@ public class ClassicGamePanel extends MapPanelBase {
         stepNumber = 0;
         myTextArea.setText("");
         textPosition = 0;
-        myMiniMapListModel.clear();
+        myMiniMapList.clear();
+        dragMiniMap = false;
+        draggedMap = null;
+        additionalMapList.clear();
     }
 
     public void setTextArea(JTextArea simpleGameTextArea) {
@@ -701,8 +1021,102 @@ public class ClassicGamePanel extends MapPanelBase {
         textPosition = 0;
     }
 
-    public void setMiniMapList(JList<LabyrinthMap> list, DefaultListModel<LabyrinthMap> model){
-        myMiniMapList = list;
-        myMiniMapListModel = model;
+    public void setMiniMapScrollPane(JScrollPane pane){
+        myMiniMapScrollPane = pane;
+        myMiniMapList = new LinkedList<>();
+
+    }
+
+    public void setDragMiniMap(LabyrinthMap map) {
+        dragMiniMap = true;
+        draggedMap = map;
+    }
+
+    public void stopDragMiniMap() {
+        //todo
+        //addMiniMap
+        dragMiniMap = false;
+        draggedMap = null;
+    }
+
+    public boolean isDragMiniMap(){
+        return dragMiniMap;
+    }
+
+    public void tryAddMiniMap(Point point) {
+        //todo why does not work?
+        Point point2 = MouseInfo.getPointerInfo().getLocation();
+        int mousex = point2.x;
+        int mousey = point2.y;
+
+        int width = getWidth();
+        int height = getHeight();
+        int centerx = width/2;
+        int centery = height/2;
+        int mainLeftX = centerx - visibleMap.width*cellWidth/2 - (visibleMap.width + 1)*borderWidth/2;
+        int mainTopY = centery - visibleMap.height*cellWidth/2 - (visibleMap.height + 1)*borderWidth/2;
+        int mainRightX = centerx + visibleMap.width*cellWidth/2 + (visibleMap.width + 1)*borderWidth/2;
+        int mainBottomY = centery + visibleMap.height*cellWidth/2 + (visibleMap.height + 1)*borderWidth/2;
+
+        int leftX = mousex - draggedMap.width*cellWidth/2 - (draggedMap.width + 1)*borderWidth/2;
+        int topY = mousey - draggedMap.height*cellWidth/2 - (draggedMap.height + 1)*borderWidth/2;
+        int rightX = mousex + draggedMap.width*cellWidth/2 + (draggedMap.width + 1)*borderWidth/2;
+        int bottomY = mousey + draggedMap.height*cellWidth/2 + (draggedMap.height + 1)*borderWidth/2;
+
+        boolean isPinned = false;
+        int shiftx = 0;
+        int shifty = 0;
+
+        if(leftX >= mainLeftX && rightX <= mainRightX && topY >= mainTopY && bottomY <= mainBottomY){
+            int xn = (leftX - mainLeftX)/(cellWidth + borderWidth);
+            int modx = (leftX - mainLeftX)%(cellWidth + borderWidth);
+            int yn = (topY - mainTopY)/(cellWidth + borderWidth);
+            int mody = (topY - mainTopY)%(cellWidth + borderWidth);
+            if((modx < cellWidth/5 || modx > (cellWidth*4)/5) && (mody < cellWidth/5 || mody > (cellWidth*4)/5)) {
+                isPinned = true;
+                if (modx < cellWidth / 5) {
+                    shiftx = xn;
+                } else if (modx > (cellWidth * 4) / 5) {
+                    shiftx = xn + 1;
+                }
+
+                if (mody < cellWidth / 5) {
+                    shifty = yn;
+                } else if (mody > (cellWidth * 4) / 5) {
+                    shifty = yn + 1;
+                }
+            }
+            if(!isPinned){
+                return;
+            }
+            if(!Util.mapFitingToAll(visibleMap, additionalMapList, draggedMap, shiftx, shifty)){
+                return;
+            }
+            addMiniMap(draggedMap,shiftx,shifty);
+        }
+    }
+
+    private void addMiniMap(LabyrinthMap map, int shiftx, int shifty) {
+        LabyrinthMap newMap = copyMapSmallToLarge(map, shiftx, shifty, visibleMap.width, visibleMap.height);
+        additionalMapList.add(newMap);
+        stopDragMiniMap();
+    }
+
+    public void removeMiniMap(MiniMapPanel map) {
+        myMiniMapList.remove(map);
+    }
+
+    private class IndexContainer{
+        public int minXindex;
+        public int maxXindex;
+        public int minYindex;
+        public int maxYindex;
+
+        public IndexContainer(int minx, int maxx, int miny, int maxy) {
+            minXindex = minx;
+            maxXindex = maxx;
+            minYindex = miny;
+            maxYindex = maxy;
+        }
     }
 }
