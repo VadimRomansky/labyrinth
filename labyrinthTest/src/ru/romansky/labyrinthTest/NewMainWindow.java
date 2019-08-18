@@ -1,10 +1,14 @@
 package ru.romansky.labyrinthTest;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Ellipse2D;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Locale;
 
 enum MainWindowMode {MENU, OPTIONS, HELP, GENERATOR, STARTGAME, SIMPLEGAME, CLASSICGAME};
@@ -71,6 +75,21 @@ public class NewMainWindow {
     private JScrollPane classicGameTextScrollPane;
     private JScrollPane miniMapScrollPane;
     private JPanel miniMapPanel;
+    private JPanel textHelpPanel;
+    private JLabel helpIntroLabel;
+    private JTextArea helpIntroTextArea;
+    private JPanel helpLabyrinthPanel;
+    private JLabel helpControlLabel;
+    private JTextArea helpControlsTextArea;
+    private JLabel helpObjectsLabel;
+    private JPanel helpObjectsPanel;
+    private JLabel helpCollectMapLabel;
+    private JTextArea helpCollectMapTextArea;
+    private JPanel helpCollectMapPanel;
+    private JLabel helpMainScreenLabel;
+    private JTextArea helpMainScreenTextArea;
+    private JPanel helpMainScreenPanel;
+    private JButton helpExitButton;
 
     private MainWindowMode myMode;
 
@@ -188,6 +207,101 @@ public class NewMainWindow {
                 }
             }
         });
+
+        URL labyrinthFile = getClass().getResource("/labyrinth.png");
+        try {
+            final Image image = ImageIO.read(labyrinthFile);
+            helpLabyrinthPanel = new JPanel(){
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(image, 0, 0, null);
+                }
+            };
+            helpLabyrinthPanel.setPreferredSize(new Dimension(-1, image.getHeight(null) + 20));
+        } catch (IOException e) {
+            e.printStackTrace();
+            helpLabyrinthPanel = new JPanel();
+        }
+
+        URL mainScreenFile = getClass().getResource("/main_screen.png");
+        try {
+            final Image image = ImageIO.read(mainScreenFile);
+            helpMainScreenPanel = new JPanel(){
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(image, 0, 0, null);
+                }
+            };
+            helpMainScreenPanel.setPreferredSize(new Dimension(-1, image.getHeight(null) + 20));
+        } catch (IOException e) {
+            e.printStackTrace();
+            helpMainScreenPanel = new JPanel();
+        }
+
+
+        URL minotaurFile = getClass().getResource("/minotaur.png");
+        try {
+            final Image image = ImageIO.read(minotaurFile);
+            helpObjectsPanel = new JPanel(){
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(image, 0, 0, null);
+                    int imageWidth = image.getWidth(null);
+                    int imageHeight = image.getHeight(null);
+                    g.setColor(Color.BLACK);
+                    Graphics2D g2d = (Graphics2D) g;
+                    FontMetrics fm = g2d.getFontMetrics();
+                    String text = "minotaurs are guards of labyrinth, they will kill you if you will step on them. After that you will lose all your equipment and respawn into the hospital";
+                    g2d.drawString(text, 3*imageWidth/2, fm.getAscent());
+
+                    g.setColor(Color.BLUE);
+                    text = "A";
+                    g2d.drawString(text, imageWidth/2, imageHeight + fm.getAscent());
+                    g.setColor(Color.BLACK);
+                    text = "you can take new bullets in the arsenal. It is guaranted, that you can find a way from hospital to arsenal without minotaurs";
+                    g2d.drawString(text, 3*imageWidth/2, imageHeight + fm.getAscent());
+                    g.setColor(Color.RED);
+                    int hlength = imageWidth*3/4;
+                    int hwidth = imageWidth*1/4;
+                    g2d.fillRect(imageWidth/2 - hlength/2, 5*imageHeight/2 - hwidth/2 , hlength, hwidth);
+                    g2d.fillRect(imageWidth/2 - hwidth/2, 5*imageHeight/2 - hlength/2 , hwidth, hlength);
+                    g.setColor(Color.BLACK);
+                    text = "you will respawn in the hospital after every accident";
+                    g2d.drawString(text, 3*imageWidth/2, 2*imageHeight + fm.getAscent());
+
+                    int radius = imageWidth/3;
+                    g2d.fill(new Ellipse2D.Double(imageWidth/2 - radius, 7*imageHeight/2 - radius, 2*radius, 2*radius));
+                    text = "portal will teleport you to another determined portal somwhere in the labyrinth. All portals are connected into the cycle";
+                    g2d.drawString(text, 3*imageWidth/2, 3*imageHeight + fm.getAscent());
+                }
+            };
+            helpObjectsPanel.setPreferredSize(new Dimension(-1, image.getHeight(null)*4 + 20));
+        } catch (IOException e) {
+            e.printStackTrace();
+            helpObjectsPanel = new JPanel();
+        }
+
+        URL pickFile = getClass().getResource("/pick_mini_map.png");
+        URL putFile = getClass().getResource("/put_mini_map.png");
+        try {
+            final Image pickImage = ImageIO.read(pickFile);
+            final Image putImage = ImageIO.read(putFile);
+            helpCollectMapPanel = new JPanel(){
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(pickImage, 0, 0, null);
+                    g.drawImage(putImage, this.getWidth()/2, 0, null);
+                }
+            };
+            helpCollectMapPanel.setPreferredSize(new Dimension(-1, pickImage.getHeight(null) + 20));
+        } catch (IOException e) {
+            e.printStackTrace();
+            helpCollectMapPanel = new JPanel();
+        }
     }
 
     public void show(){
@@ -358,11 +472,21 @@ public class NewMainWindow {
     }
 
     private void setupHelpPanel() {
+        helpIntroTextArea.setText("Labyrinth (or Terra Incognita) is a logical paper-and-pencil game. You start game on the random point in the randomly generated labyrinth, like shown on the picture below. Your goal is to find exit from labyrinth, represented with the red line, by revealing the it's design. You should move step-by-step, opening the map, kill the minotaurs and combine parts of the map. You can create different labyrinths using map generator. For more detail information see https://en.wikipedia.org/wiki/Labyrinth_(paper-and-pencil_game)");
+        helpMainScreenTextArea.setText("In the center of main screen you can see the game field, where you can move your character. In the upper-left there is current information about portals, minotaurs and your amount of bullets. In the bottom of the sreen there is a log of all your steps. And on the rigth side there is panel for opened parts of map.");
+        helpControlsTextArea.setText("You can move throught the labyrinth using WASD on the keyboard. If there is not wall on your course, you will go through. Otherwise wall will appear on your map. In the beginning of every move, you can shoot in every direction to kill minotaurs, using arrows on keyboard. But you have only limited amount of bullets.");
+        helpCollectMapTextArea.setText("To open the whole labyrinth, you should combine available map parts. They are represented on the mini map panel, on the right part of main screen. You can pick one of them with the mouse and drag it to the main map. If they will match, lines will be highlited with green colour, and you can combine them with mouse left-click. Click right buton if you want to stop dragging. Also you can delete unnecessary mini maps and split them, using buttons on them.");
         helpBackButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "menu");
                 myMode = MainWindowMode.MENU;
+            }
+        });
+        helpExitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                myFrame.dispose();
             }
         });
     }

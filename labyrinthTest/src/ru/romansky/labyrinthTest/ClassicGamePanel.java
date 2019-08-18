@@ -1187,6 +1187,7 @@ public class ClassicGamePanel extends MapPanelBase {
         myTextArea.setText("");
         textPosition = 0;
         myMiniMapList.clear();
+        myMiniMapPanel.removeAll();
         dragMiniMap = false;
         draggedMap = null;
         additionalMapList.clear();
