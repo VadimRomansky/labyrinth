@@ -217,4 +217,14 @@ public class MiniMapPanel extends JPanel {
         int width = getWidth();
         return ((x > width - 20) && (x <= width)&& ( y >= 0 ) && ( y <= 20));
     }
+
+    public int mapsNumber(){
+        return myMapList.size();
+    }
+
+    public List<LabyrinthMap> getMaps(){
+        List<LabyrinthMap> list = new LinkedList<>();
+        list.addAll(myMapList);
+        return list;
+    }
 }

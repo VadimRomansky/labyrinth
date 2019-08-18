@@ -51,7 +51,7 @@ public class NewMainWindow {
     private JComboBox startMinotaursComboBox;
     private JLabel startPortalsLabel;
     private JComboBox startPortalsComboBox;
-    private JButton startSimpleButton;
+    //private JButton startSimpleButton;
     private JButton startReturnButton;
     private JPanel simpleGameMapPanel;
     private JButton optionsBackButton;
@@ -70,6 +70,7 @@ public class NewMainWindow {
     private JTextArea classicGameTextArea;
     private JScrollPane classicGameTextScrollPane;
     private JScrollPane miniMapScrollPane;
+    private JPanel miniMapPanel;
 
     private MainWindowMode myMode;
 
@@ -131,77 +132,7 @@ public class NewMainWindow {
         classicGameMapPanel = new ClassicGamePanel(myFrame, classicGamePanel);
         generateMapPanel = new MapPanel(myFrame, generateMapPanel);
 
-        /*ListCellRenderer<MiniMapPanel> listRender = new ListCellRenderer<MiniMapPanel>() {
 
-            @Override
-            public Component getListCellRendererComponent(
-                    JList<? extends MiniMapPanel> list, MiniMapPanel value, int index,
-                    boolean isSelected, boolean cellHasFocus) {
-
-                value.setBackground(Color.WHITE);
-                int hight = (value.getMap().height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
-                value.setBounds(0, 0, miniMapList.getWidth() - 20, hight);
-                value.setPreferredSize(new Dimension(miniMapList.getWidth() -20, hight));
-                //panel.addMouseListener(new MiniMapMouseListener((ClassicGamePanel) classicGameMapPanel, value));
-                return value;
-            }
-        };*/
-
-
-        /*miniMapList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                myFrame.requestFocus();
-                MiniMapPanel map = (MiniMapPanel) miniMapList.getSelectedValue();
-                if(map != null) {
-                    ((ClassicGamePanel) classicGameMapPanel).setDragMiniMap(map.getMap());
-                }
-            }
-        });*/
-
-        /*miniMapList.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int x = e.getX();
-                int y = e.getY();
-                int index = miniMapList.getSelectedIndex();
-                Rectangle bounds = miniMapList.getCellBounds(index, index);
-                if (null != bounds && bounds.contains(x, y)) {
-                    MiniMapPanel map = (MiniMapPanel) miniMapList.getSelectedValue();
-                    if(map != null) {
-                        Point point = e.getPoint();
-                        if(map.mouseOnSplitButton(point)){
-
-                        } else if(map.mouseOnDeleteButton(point)){
-                            ((ClassicGamePanel) classicGameMapPanel).stopDragMiniMap();
-                            ((ClassicGamePanel) classicGameMapPanel).removeMiniMap(map);
-                        } else {
-                            ((ClassicGamePanel) classicGameMapPanel).setDragMiniMap(map.getMap());
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });*/
 
         classicGameMapPanel.addMouseListener(new MouseListener() {
             @Override
@@ -225,7 +156,7 @@ public class NewMainWindow {
 
             @Override
             public void mousePressed(MouseEvent e) {
-
+                mouseClicked(e);
             }
 
             @Override
@@ -243,6 +174,7 @@ public class NewMainWindow {
 
             }
         });
+
 
         frame.setFocusable( true );
         frame.addKeyListener(new KeyAdapter() {
@@ -269,7 +201,8 @@ public class NewMainWindow {
         //mainPanel.setSize(new Dimension(600, 600));
 
 
-
+        miniMapScrollPane.setPreferredSize(new Dimension(200,1000));
+        miniMapScrollPane.setBackground(Color.WHITE);
 
         myFrame.setContentPane(mainPanel);
         myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -279,6 +212,7 @@ public class NewMainWindow {
         Timer timer = new Timer(20, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 myFrame.repaint();
             }
         });
@@ -312,10 +246,11 @@ public class NewMainWindow {
 
     private void setupClassicGamePanel() {
         //classicGamePanel.setSize(600, 500);
+        miniMapPanel.setLayout(new BoxLayout(miniMapPanel, BoxLayout.Y_AXIS));
 
         classicGameTextScrollPane.setPreferredSize(new Dimension(600, 50));
         ((ClassicGamePanel)classicGameMapPanel).setTextArea(classicGameTextArea);
-        ((ClassicGamePanel)classicGameMapPanel).setMiniMapScrollPane(miniMapScrollPane);
+        ((ClassicGamePanel)classicGameMapPanel).setMiniMapPanel(miniMapPanel);
 
         classicGameReturnButton.addActionListener(new ActionListener() {
             @Override
@@ -464,7 +399,7 @@ public class NewMainWindow {
         startPortalsComboBox.addItem("middle");
         startPortalsComboBox.addItem("high");
 
-        startSimpleButton.addActionListener(new ActionListener() {
+        /*startSimpleButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myFrame.requestFocus();
@@ -490,7 +425,7 @@ public class NewMainWindow {
                 myMode = MainWindowMode.SIMPLEGAME;
                 myFrame.requestFocus();
             }
-        });
+        });*/
 
         startClassicButton.addActionListener(new ActionListener() {
             @Override

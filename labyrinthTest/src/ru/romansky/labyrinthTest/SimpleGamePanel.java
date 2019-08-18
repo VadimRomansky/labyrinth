@@ -111,11 +111,11 @@ public class SimpleGamePanel extends MapPanelBase {
             int key = e.getKeyCode();
 
             if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
-                moveCharacter(key);
+                shootBullet(key);
                 return;
             }
             if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
-                shootBullet(key);
+                moveCharacter(key);
                 return;
             }
         }
@@ -130,16 +130,16 @@ public class SimpleGamePanel extends MapPanelBase {
         int bulletx = characterx;
         int bullety = charactery;
         Direction direction = Direction.DOWN;//todo
-        if(key == KeyEvent.VK_S){
+        if(key == KeyEvent.VK_DOWN){
             direction = Direction.DOWN;
             text = text + " down.";
-        } else if (key == KeyEvent.VK_W){
+        } else if (key == KeyEvent.VK_UP){
             direction = Direction.UP;
             text = text + " up.";
-        } else if (key == KeyEvent.VK_A){
+        } else if (key == KeyEvent.VK_LEFT){
             direction = Direction.LEFT;
             text = text + " left.";
-        } else if (key == KeyEvent.VK_D){
+        } else if (key == KeyEvent.VK_RIGHT){
             direction = Direction.RIGHT;
             text = text + " right.";
         }
@@ -193,16 +193,16 @@ public class SimpleGamePanel extends MapPanelBase {
         Direction direction = Direction.DOWN;//todo;
         stepNumber++;
         String text = stepNumber + ". You moved";
-        if(key == KeyEvent.VK_DOWN){
+        if(key == KeyEvent.VK_S){
             direction = Direction.DOWN;
             text = text + " down";
-        } else if (key == KeyEvent.VK_UP){
+        } else if (key == KeyEvent.VK_W){
             direction = Direction.UP;
             text = text + " up";
-        } else if (key == KeyEvent.VK_LEFT){
+        } else if (key == KeyEvent.VK_A){
             direction = Direction.LEFT;
             text = text + " left";
-        } else if (key == KeyEvent.VK_RIGHT){
+        } else if (key == KeyEvent.VK_D){
             direction = Direction.RIGHT;
             text = text + " right";
         }

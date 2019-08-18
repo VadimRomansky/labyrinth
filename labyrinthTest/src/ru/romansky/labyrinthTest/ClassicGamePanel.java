@@ -14,6 +14,7 @@ import static java.lang.Thread.sleep;
 public class ClassicGamePanel extends MapPanelBase {
     private boolean dragMiniMap = false;
     private LabyrinthMap draggedMap;
+    private List<LabyrinthMap> draggedList;
     private JTextArea myTextArea;
     private List<MiniMapPanel> myMiniMapList;
     private int textPosition = 0;
@@ -31,8 +32,7 @@ public class ClassicGamePanel extends MapPanelBase {
     public static final Font smallFont = new Font("TimesRoman", Font.PLAIN, 14);;
     public static final Font microFont = new Font("TimesRoman", Font.PLAIN, 10);;
     public static final Font hugeFont = new Font("TimesRoman", Font.PLAIN, 48);;
-    private JScrollPane myMiniMapScrollPane;
-    private int miniMapPosition;
+    private JPanel myMiniMapPanel;
 
     public ClassicGamePanel(JFrame frame, JPanel parent) {
         this.myFrame = frame;
@@ -169,11 +169,11 @@ public class ClassicGamePanel extends MapPanelBase {
             int key = e.getKeyCode();
 
             if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
-                moveCharacter(key);
+                shootBullet(key);
                 return;
             }
             if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
-                shootBullet(key);
+                moveCharacter(key);
                 return;
             }
         }
@@ -188,16 +188,16 @@ public class ClassicGamePanel extends MapPanelBase {
         int bulletx = realCharacterx;
         int bullety = realCharactery;
         Direction direction = Direction.DOWN;//todo
-        if(key == KeyEvent.VK_S){
+        if(key == KeyEvent.VK_DOWN){
             direction = Direction.DOWN;
             text = text + " down.";
-        } else if (key == KeyEvent.VK_W){
+        } else if (key == KeyEvent.VK_UP){
             direction = Direction.UP;
             text = text + " up.";
-        } else if (key == KeyEvent.VK_A){
+        } else if (key == KeyEvent.VK_LEFT){
             direction = Direction.LEFT;
             text = text + " left.";
-        } else if (key == KeyEvent.VK_D){
+        } else if (key == KeyEvent.VK_RIGHT){
             direction = Direction.RIGHT;
             text = text + " right.";
         }
@@ -251,16 +251,16 @@ public class ClassicGamePanel extends MapPanelBase {
         Direction direction = Direction.DOWN;//todo;
         stepNumber++;
         String text = stepNumber + ". You moved";
-        if(key == KeyEvent.VK_DOWN){
+        if(key == KeyEvent.VK_S){
             direction = Direction.DOWN;
             text = text + " down";
-        } else if (key == KeyEvent.VK_UP){
+        } else if (key == KeyEvent.VK_W){
             direction = Direction.UP;
             text = text + " up";
-        } else if (key == KeyEvent.VK_LEFT){
+        } else if (key == KeyEvent.VK_A){
             direction = Direction.LEFT;
             text = text + " left";
-        } else if (key == KeyEvent.VK_RIGHT){
+        } else if (key == KeyEvent.VK_D){
             direction = Direction.RIGHT;
             text = text + " right";
         }
@@ -289,6 +289,7 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(objects);
             visibleMap.cells[visibleCharacterx][visibleCharactery].minotaur = myMap.cells[realCharacterx][realCharactery].minotaur;
+            checkCellConflict(visibleCharacterx, visibleCharactery, myMap.cells[realCharacterx][realCharactery]);
             revalidate();
             repaint();
             myFrame.revalidate();
@@ -304,6 +305,33 @@ public class ClassicGamePanel extends MapPanelBase {
             writeTextMessage(text);
             setBoundaryStateVisible(direction);
             repaint();
+        }
+    }
+
+    private void checkCellConflict(int i, int j,Cell cell) {
+        for (LabyrinthMap map :
+                additionalMapList) {
+            if(map.cells[i][j].state != CellState.UNDEFINED){
+                if(map.cells[i][j].type != cell.type){
+                    additionalMapList.remove(map);
+                } else {
+                    if(map.cells[i][j].minotaur == null){
+                        if(cell.minotaur != null){
+                            additionalMapList.remove(map);
+                        }
+                    } else {
+                        if(cell.minotaur == null){
+                            additionalMapList.remove(map);
+                        } else {
+                            if(!map.cells[i][j].minotaur.isAlive()){
+                                if(cell.minotaur.isAlive()){
+                                    additionalMapList.remove(map);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -341,15 +369,41 @@ public class ClassicGamePanel extends MapPanelBase {
     private void setBoundaryStateVisible(Direction direction) {
         if(direction == Direction.DOWN) {
             visibleMap.horizontalBorders[visibleCharacterx][visibleCharactery + 1].setState(myMap.horizontalBorders[realCharacterx][realCharactery + 1].state());
+            checkHorizontalBorderConflictWithAdditional(visibleCharacterx, visibleCharactery+1);
         }
         if(direction == Direction.UP) {
             visibleMap.horizontalBorders[visibleCharacterx][visibleCharactery].setState(myMap.horizontalBorders[realCharacterx][realCharactery].state());
+            checkHorizontalBorderConflictWithAdditional(visibleCharacterx, visibleCharactery);
         }
         if(direction == Direction.LEFT) {
             visibleMap.verticalBorders[visibleCharacterx][visibleCharactery].setState(myMap.verticalBorders[realCharacterx][realCharactery].state());
+            checkVerticalBorderConflictWithAdditional(visibleCharacterx, visibleCharactery);
         }
         if(direction == Direction.RIGHT) {
             visibleMap.verticalBorders[visibleCharacterx+1][visibleCharactery].setState(myMap.verticalBorders[realCharacterx+1][realCharactery].state());
+            checkVerticalBorderConflictWithAdditional(visibleCharacterx+1, visibleCharactery);
+        }
+    }
+
+    private void checkHorizontalBorderConflictWithAdditional(int i, int j) {
+        for (LabyrinthMap map :
+                additionalMapList) {
+            if(map.horizontalBorders[i][j].state() != BorderState.UNDEFINED && visibleMap.horizontalBorders[i][j].state() != BorderState.UNDEFINED){
+                if(map.horizontalBorders[i][j].state() != visibleMap.horizontalBorders[i][j].state()){
+                    additionalMapList.remove(map);
+                }
+            }
+        }
+    }
+
+    private void checkVerticalBorderConflictWithAdditional(int i, int j) {
+        for (LabyrinthMap map :
+                additionalMapList) {
+            if(map.verticalBorders[i][j].state() != BorderState.UNDEFINED && visibleMap.verticalBorders[i][j].state() != BorderState.UNDEFINED){
+                if(map.verticalBorders[i][j].state() != visibleMap.verticalBorders[i][j].state()){
+                    additionalMapList.remove(map);
+                }
+            }
         }
     }
 
@@ -529,8 +583,12 @@ public class ClassicGamePanel extends MapPanelBase {
 
 
         MiniMapPanel miniMapPanel = new MiniMapPanel(miniMapList);
+        int height = (miniMapPanel.getMap().height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
+        miniMapPanel.setPreferredSize(new Dimension(myMiniMapPanel.getWidth() - 30,height));
+        miniMapPanel.setBackground(Color.WHITE);
         setMouseListener(miniMapPanel);
         myMiniMapList.add(miniMapPanel);
+        myMiniMapPanel.add(miniMapPanel);
     }
 
     private void setMouseListener(MiniMapPanel miniMapPanel) {
@@ -541,18 +599,22 @@ public class ClassicGamePanel extends MapPanelBase {
                 int x = point.x;
                 int y = point.y;
                 if(miniMapPanel.mouseOnSplitButton(point)){
-
+                    stopDragMiniMap();
+                    if(miniMapPanel.mapsNumber() > 1){
+                        splitMiniMap(miniMapPanel);
+                    }
                 } else if(miniMapPanel.mouseOnDeleteButton(point)){
                     stopDragMiniMap();
                     myMiniMapList.remove(miniMapPanel);
+                    myMiniMapPanel.remove(miniMapPanel);
                 } else {
-
+                    setDragMiniMap(miniMapPanel.getMap(), miniMapPanel.getMaps());
                 }
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
-
+                mouseClicked(e);
             }
 
             @Override
@@ -570,6 +632,27 @@ public class ClassicGamePanel extends MapPanelBase {
 
             }
         });
+    }
+
+    private void splitMiniMap(MiniMapPanel miniMapPanel) {
+        myMiniMapList.remove(miniMapPanel);
+        myMiniMapPanel.remove(miniMapPanel);
+        List<LabyrinthMap> maps = miniMapPanel.getMaps();
+        for (LabyrinthMap map :
+                maps) {
+            IndexContainer index = defineMinMaxIndex(map);
+            int xsize = index.maxXindex - index.minXindex + 1;
+            int ysize = index.maxYindex - index.minYindex + 1;
+            LabyrinthMap newMap = copyMapLargeToSmall(map, index.minXindex, index.minYindex, xsize, ysize);
+            MiniMapPanel tempMapPanel = new MiniMapPanel(newMap);
+            int height = (newMap.height + 2)*(MiniMapPanel.cellWidth + MiniMapPanel.borderWidth);
+            tempMapPanel.setPreferredSize(new Dimension(myMiniMapPanel.getWidth() - 30,height));
+            tempMapPanel.setBackground(Color.WHITE);
+            setMouseListener(tempMapPanel);
+            myMiniMapList.add(tempMapPanel);
+            myMiniMapPanel.add(tempMapPanel);
+        }
+        myMiniMapPanel.revalidate();
     }
 
     private IndexContainer defineMinMaxIndex(LabyrinthMap map){
@@ -682,12 +765,104 @@ public class ClassicGamePanel extends MapPanelBase {
 
     private List<LabyrinthMap> copyAllMapsLargeToSmall(LabyrinthMap map, List<LabyrinthMap> mapList, int minXindex, int minYindex, int xsize, int ysize) {
         List<LabyrinthMap> result = new LinkedList<>();
-        result.add(copyMapLargeToSmall(map, minXindex, minYindex, xsize, ysize));
+        if(!mapCoveredByList(map, mapList, minXindex, minYindex, xsize, ysize)) {
+            result.add(copyMapLargeToSmall(map, minXindex, minYindex, xsize, ysize));
+        }
         for (LabyrinthMap tempMap :
                 mapList) {
             result.add(copyMapLargeToSmall(tempMap, minXindex, minYindex, xsize, ysize));
         }
         return result;
+    }
+
+    private boolean mapCoveredByList(LabyrinthMap map, List<LabyrinthMap> mapList, int minXindex, int minYindex, int xsize, int ysize) {
+        for(int i = 0; i < xsize; ++i){
+            for(int j = 0; j <= ysize; ++j){
+                if(map.horizontalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                    boolean covered = false;
+                    for (LabyrinthMap coveringMap :
+                        mapList) {
+                        if(coveringMap.horizontalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                            covered = true;
+                        }
+                    }
+                    if(!covered){
+                        return false;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i <= xsize; ++i){
+            for(int j = 0; j < ysize; ++j){
+                if(map.verticalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                    boolean covered = false;
+                    for (LabyrinthMap coveringMap :
+                            mapList) {
+                        if(coveringMap.verticalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                            covered = true;
+                        }
+                    }
+                    if(!covered){
+                        return false;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < xsize; ++i){
+            for(int j = 0; j < ysize; ++j){
+                if(map.cells[i+minXindex][j+minYindex].state != CellState.UNDEFINED){
+                    boolean covered = false;
+                    for (LabyrinthMap coveringMap :
+                            mapList) {
+                        if(coveringMap.cells[i+minXindex][j+minYindex].state != CellState.UNDEFINED){
+                            covered = true;
+                        }
+                    }
+                    if(!covered){
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+        return true;
+    }
+
+    private boolean mapCoveredByMap(LabyrinthMap map, LabyrinthMap coveringMap, int minXindex, int minYindex, int xsize, int ysize) {
+        for(int i = 0; i < xsize; ++i){
+            for(int j = 0; j <= ysize; ++j){
+                if(coveringMap.horizontalBorders[i+minXindex][j+minYindex].state() == BorderState.UNDEFINED){
+                    if(map.horizontalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                        return false;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i <= xsize; ++i){
+            for(int j = 0; j < ysize; ++j){
+                if(coveringMap.verticalBorders[i+minXindex][j+minYindex].state() == BorderState.UNDEFINED){
+                    if(map.verticalBorders[i+minXindex][j+minYindex].state() != BorderState.UNDEFINED){
+                        return false;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < xsize; ++i){
+            for(int j = 0; j < ysize; ++j){
+                if(coveringMap.cells[i+minXindex][j+minYindex].state == CellState.UNDEFINED){
+                    if(map.cells[i+minXindex][j+minYindex].state == CellState.VISITED){
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     private LabyrinthMap copyMapSmallToLarge(LabyrinthMap map, int minXindex, int minYindex, int xsize, int ysize) {
@@ -728,6 +903,7 @@ public class ClassicGamePanel extends MapPanelBase {
 
     public void paint(Graphics g) {
         super.paint(g);
+        //myMiniMapScrollPane.repaint();
         //g.setColor(Color.WHITE);
         g.setFont(smallFont);
         if((myMap != null) && (visibleMap != null)){
@@ -1021,15 +1197,17 @@ public class ClassicGamePanel extends MapPanelBase {
         textPosition = 0;
     }
 
-    public void setMiniMapScrollPane(JScrollPane pane){
-        myMiniMapScrollPane = pane;
+
+    public void setMiniMapPanel(JPanel panel){
+        myMiniMapPanel = panel;
         myMiniMapList = new LinkedList<>();
 
     }
 
-    public void setDragMiniMap(LabyrinthMap map) {
+    public void setDragMiniMap(LabyrinthMap map, List<LabyrinthMap> list) {
         dragMiniMap = true;
         draggedMap = map;
+        draggedList = list;
     }
 
     public void stopDragMiniMap() {
@@ -1089,16 +1267,26 @@ public class ClassicGamePanel extends MapPanelBase {
             if(!isPinned){
                 return;
             }
+            //todo maybe check all separately
             if(!Util.mapFitingToAll(visibleMap, additionalMapList, draggedMap, shiftx, shifty)){
                 return;
             }
-            addMiniMap(draggedMap,shiftx,shifty);
+            addMiniMap(draggedList,shiftx,shifty);
         }
     }
 
     private void addMiniMap(LabyrinthMap map, int shiftx, int shifty) {
         LabyrinthMap newMap = copyMapSmallToLarge(map, shiftx, shifty, visibleMap.width, visibleMap.height);
         additionalMapList.add(newMap);
+        stopDragMiniMap();
+    }
+
+    private void addMiniMap(List<LabyrinthMap> list, int shiftx, int shifty) {
+        for (LabyrinthMap map :
+                list) {
+            LabyrinthMap newMap = copyMapSmallToLarge(map, shiftx, shifty, visibleMap.width, visibleMap.height);
+            additionalMapList.add(newMap);
+        }
         stopDragMiniMap();
     }
 
