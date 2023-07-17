@@ -1,5 +1,7 @@
 package ru.romansky.labyrinthTest;
 
+import javafx.util.Pair;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -27,6 +29,7 @@ public class ClassicGamePanel extends MapPanelBase {
     int realCharactery = -1;
     int visibleCharacterx = -1;
     int visibleCharactery = -1;
+    int portalsPassing = 0;
     int mapShiftX;
     int mapShiftY;
     public static final Font smallFont = new Font("TimesRoman", Font.PLAIN, 14);;
@@ -510,6 +513,9 @@ public class ClassicGamePanel extends MapPanelBase {
         }
         if(myMap.cells[realCharacterx][realCharactery].type == CellType.PORTAL) {
             visibleMap.cells[visibleCharacterx][visibleCharactery] = new PortalCell(((PortalCell)myMap.cells[realCharacterx][realCharactery]).number, visibleCharacterx,visibleCharactery, 0);
+            if(portalsPassing == 0){
+                ((PortalCell)visibleMap.cells[visibleCharacterx][visibleCharactery]).visibleNumber = ((PortalCell)visibleMap.cells[visibleCharacterx][visibleCharactery]).number;
+            }
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.add(character);
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(myMap.cells[realCharacterx][realCharactery].characters);
@@ -524,6 +530,10 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleCharacterx = realCharacterx + mapShiftX;
             visibleCharactery = realCharactery + mapShiftY;
             visibleMap.cells[visibleCharacterx][visibleCharactery] = new PortalCell(((PortalCell)myMap.cells[realCharacterx][realCharactery]).number, visibleCharacterx,visibleCharactery, 0);
+            if(portalsPassing == 0){
+                ((PortalCell)visibleMap.cells[visibleCharacterx][visibleCharactery]).visibleNumber = ((PortalCell)visibleMap.cells[visibleCharacterx][visibleCharactery]).number;
+            }
+            portalsPassing++;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.add(character);
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(myMap.cells[realCharacterx][realCharactery].characters);
@@ -595,20 +605,35 @@ public class ClassicGamePanel extends MapPanelBase {
         miniMapPanel.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Point point = e.getPoint();
-                int x = point.x;
-                int y = point.y;
-                if(miniMapPanel.mouseOnSplitButton(point)){
-                    stopDragMiniMap();
-                    if(miniMapPanel.mapsNumber() > 1){
-                        splitMiniMap(miniMapPanel);
+                if(SwingUtilities.isLeftMouseButton(e)) {
+                    Point point = e.getPoint();
+                    int x = point.x;
+                    int y = point.y;
+                    if (miniMapPanel.mouseOnSplitButton(point)) {
+                        stopDragMiniMap();
+                        if (miniMapPanel.mapsNumber() > 1) {
+                            splitMiniMap(miniMapPanel);
+                        }
+                    } else if (miniMapPanel.mouseOnDeleteButton(point)) {
+                        stopDragMiniMap();
+                        myMiniMapList.remove(miniMapPanel);
+                        myMiniMapPanel.remove(miniMapPanel);
+                    } else {
+                        setDragMiniMap(miniMapPanel.getMap(), miniMapPanel.getMaps());
                     }
-                } else if(miniMapPanel.mouseOnDeleteButton(point)){
-                    stopDragMiniMap();
-                    myMiniMapList.remove(miniMapPanel);
-                    myMiniMapPanel.remove(miniMapPanel);
-                } else {
-                    setDragMiniMap(miniMapPanel.getMap(), miniMapPanel.getMaps());
+                } else if(SwingUtilities.isRightMouseButton(e)){
+                    Point point = e.getPoint();
+                    if(miniMapPanel.mouseOnPortal(point)){
+                        Pair<Integer, Integer> coordinates = miniMapPanel.getSelectedCellCoordinates(point);
+                        String string = JOptionPane.showInputDialog(ClassicGamePanel.this,
+                                "Input number", null);
+                        try {
+                            int number = Integer.parseInt(string);
+                            miniMapPanel.setPortalNumber(coordinates.getKey(), coordinates.getValue(), number);
+                        } catch (NumberFormatException exception){
+
+                        }
+                    }
                 }
             }
 
@@ -745,7 +770,7 @@ public class ClassicGamePanel extends MapPanelBase {
         for(int i = 0; i < newMap.width; ++i){
             for(int j = 0; j < newMap.height; ++j){
                 if(map.cells[i+minXindex][j+minYindex].type == CellType.PORTAL){
-                    newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i+minXindex][j+minYindex]).number, i, j, 0);
+                    newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i+minXindex][j+minYindex]).number, ((PortalCell)map.cells[i+minXindex][j+minYindex]).visibleNumber, i, j, 0);
                 }
                 if(map.cells[i+minXindex][j+minYindex].type == CellType.ARSENAL){
                     newMap.cells[i][j] = new ArsenalCell(i,j,0);
@@ -883,7 +908,7 @@ public class ClassicGamePanel extends MapPanelBase {
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height; ++j){
                 if(map.cells[i][j].type == CellType.PORTAL){
-                    newMap.cells[i + minXindex][j + minYindex] = new PortalCell(((PortalCell)map.cells[i][j]).number, i + minXindex, j + minYindex, 0);
+                    newMap.cells[i + minXindex][j + minYindex] = new PortalCell(((PortalCell)map.cells[i][j]).number, ((PortalCell)map.cells[i][j]).visibleNumber, i + minXindex, j + minYindex, 0);
                 }
                 if(map.cells[i][j].type == CellType.ARSENAL){
                     newMap.cells[i + minXindex][j + minYindex] = new ArsenalCell(i + minXindex,j + minYindex ,0);
@@ -1191,6 +1216,7 @@ public class ClassicGamePanel extends MapPanelBase {
         dragMiniMap = false;
         draggedMap = null;
         additionalMapList.clear();
+        portalsPassing = 0;
     }
 
     public void setTextArea(JTextArea simpleGameTextArea) {
@@ -1286,6 +1312,7 @@ public class ClassicGamePanel extends MapPanelBase {
         for (LabyrinthMap map :
                 list) {
             LabyrinthMap newMap = copyMapSmallToLarge(map, shiftx, shifty, visibleMap.width, visibleMap.height);
+            //todo unify portal numbers
             additionalMapList.add(newMap);
         }
         stopDragMiniMap();

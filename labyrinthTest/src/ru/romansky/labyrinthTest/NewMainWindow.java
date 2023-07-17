@@ -503,10 +503,10 @@ public class NewMainWindow {
 
     private void setupStartGamePanel() {
         simpleGameMapPanel.setSize(600, 500);
-        for(int i = 6; i < 16; ++i){
+        for(int i = 6; i <= 12; ++i){
             sizeComboBox.addItem(new Integer(i));
         }
-        sizeComboBox.setSelectedIndex(4);
+        sizeComboBox.setSelectedIndex(2);
 
         difficultyComboBox.addItem("low");
         difficultyComboBox.addItem("middle");

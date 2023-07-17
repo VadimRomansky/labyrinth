@@ -1,5 +1,7 @@
 package ru.romansky.labyrinthTest;
 
+import javafx.util.Pair;
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -156,6 +158,15 @@ public class MiniMapPanel extends JPanel {
                                 g2d.setColor(Color.BLACK);
                                 g2d.drawOval(cellx - radius, celly - radius, 2 * radius, 2 * radius);
                                 g2d.fill(new Ellipse2D.Double(cellx - radius, celly - radius, 2 * radius, 2 * radius));
+                                if(((PortalCell)myMap.cells[i][j]).visibleNumber >= 0) {
+                                    String text = Integer.toString(((PortalCell)myMap.cells[i][j]).visibleNumber);
+                                    g2d.setColor(Color.WHITE);
+                                    g.setFont(ClassicGamePanel.microFont);
+                                    FontMetrics fm = g2d.getFontMetrics();
+                                    int textWidth = fm.stringWidth(text);
+                                    int textHeight = fm.getHeight();
+                                    g2d.drawString(text, cellx - textWidth / 2, celly - textHeight / 2 + fm.getAscent());
+                                }
                             }
                             if (myMap.cells[i][j].type == CellType.ARSENAL) {
                                 String text = "A";
@@ -218,6 +229,62 @@ public class MiniMapPanel extends JPanel {
         return ((x > width - 20) && (x <= width)&& ( y >= 0 ) && ( y <= 20));
     }
 
+    public boolean mouseOnPortal(Point point) {
+        Cell cell = getSelectedCell(point);
+
+        if(cell != null){
+            if(cell.state == CellState.VISITED){
+                if(cell.type == CellType.PORTAL){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public Cell getSelectedCell(Point point){
+        int x = point.x;
+        int y = point.y;
+        int width = getWidth();
+        int height = getHeight();
+
+        int centerx = width / 2;
+        int centery = height / 2;
+        int leftX = centerx - myMap.width * cellWidth / 2 - (myMap.width + 1) * borderWidth / 2;
+        int topY = centery - myMap.height * cellWidth / 2 - (myMap.height + 1) * borderWidth / 2;
+
+        int i = (x - leftX)/(cellWidth + borderWidth);
+        int j = (y - topY)/(cellWidth + borderWidth);
+        if(i >= 0 && j >= 0 && i < myMap.width && j < myMap.height) {
+            if (myMap.cells[i][j].state == CellState.VISITED) { //todo?
+                    return myMap.cells[i][j];
+            }
+        }
+        return null;
+    }
+
+    public Pair<Integer, Integer> getSelectedCellCoordinates(Point point){
+        int x = point.x;
+        int y = point.y;
+        int width = getWidth();
+        int height = getHeight();
+
+        int centerx = width / 2;
+        int centery = height / 2;
+        int leftX = centerx - myMap.width * cellWidth / 2 - (myMap.width + 1) * borderWidth / 2;
+        int topY = centery - myMap.height * cellWidth / 2 - (myMap.height + 1) * borderWidth / 2;
+
+        int i = (x - leftX)/(cellWidth + borderWidth);
+        int j = (y - topY)/(cellWidth + borderWidth);
+        if(i >= 0 && j >= 0 && i < myMap.width && j < myMap.height) {
+            if (myMap.cells[i][j].state == CellState.VISITED) { //todo?
+                return new Pair<>(i,j);
+            }
+        }
+        return null;
+    }
+
     public int mapsNumber(){
         return myMapList.size();
     }
@@ -226,5 +293,15 @@ public class MiniMapPanel extends JPanel {
         List<LabyrinthMap> list = new LinkedList<>();
         list.addAll(myMapList);
         return list;
+    }
+
+    public void setPortalNumber(int i, int j, int number) {
+        ((PortalCell) myMap.cells[i][j]).setVisibleNumber(number);
+        for (LabyrinthMap map :
+                myMapList) {
+            if(map.cells[i][j].state == CellState.VISITED){
+                ((PortalCell)map.cells[i][j]).setVisibleNumber(number);
+            }
+        }
     }
 }

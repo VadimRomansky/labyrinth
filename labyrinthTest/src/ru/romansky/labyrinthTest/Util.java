@@ -51,7 +51,7 @@ public class Util {
                                 newMap.cells[i][j] = new HospitalCell(i,j,0);
                             }
                             if(map.cells[i][j].type == CellType.PORTAL){
-                                newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i][j]).number,i,j,0);
+                                newMap.cells[i][j] = new PortalCell(((PortalCell)map.cells[i][j]).number, ((PortalCell)map.cells[i][j]).visibleNumber,i,j,0);
                             }
                             newMap.cells[i][j].state = CellState.VISITED;
                             if(map.cells[i][j].minotaur != null) {
@@ -60,6 +60,11 @@ public class Util {
                                 newMap.cells[i][j].minotaur = null;
                             }
                         } else {
+                            if(newMap.cells[i][j].type == CellType.PORTAL && map.cells[i][j].type == CellType.PORTAL){
+                                if(((PortalCell)newMap.cells[i][j]).visibleNumber < 0){
+                                    ((PortalCell)newMap.cells[i][j]).visibleNumber = ((PortalCell)map.cells[i][j]).visibleNumber;
+                                }
+                            }
                             if(map.cells[i][j].type != newMap.cells[i][j].type){
                                 throw new Exception("Cell types are in conflict");
                             }
@@ -80,6 +85,17 @@ public class Util {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < width; ++i){
+            for(int j = 0; j < height; ++j) {
+                for (LabyrinthMap map :
+                        mapList) {
+                    if(newMap.cells[i][j].type == CellType.PORTAL && map.cells[i][j].type == CellType.PORTAL){
+                            ((PortalCell)map.cells[i][j]).visibleNumber = ((PortalCell)newMap.cells[i][j]).visibleNumber;
                     }
                 }
             }

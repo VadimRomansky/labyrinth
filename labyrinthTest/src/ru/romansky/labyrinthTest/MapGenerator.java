@@ -370,6 +370,10 @@ public class MapGenerator {
         firstPortal.prev = lastPortal;
     }
 
+    private void placeFirstMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA){
+
+    }
+
     private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA) {
         while (true) {
             int i = random.nextInt(map.width);
