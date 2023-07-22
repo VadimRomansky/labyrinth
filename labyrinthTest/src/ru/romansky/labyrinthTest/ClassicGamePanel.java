@@ -298,14 +298,14 @@ public class ClassicGamePanel extends MapPanelBase {
             myFrame.revalidate();
             eventAfterMove(text);
             repaint();
-        } else if(checkVictory(direction, realCharacterx, realCharactery)) {
-            text = text + " and went out of the labyrinth.";
-            writeTextMessage(text);
+        } else if(checkVictory(direction, realCharacterx, realCharactery, text)) {
+            //text = text + " and went out of the labyrinth.";
+            //writeTextMessage(text);
             setBoundaryStateVisible(direction);
             celebrateVictory();
         } else {
-            text = text + " and bumped into the wall.";
-            writeTextMessage(text);
+            //text = text + " and bumped into the wall.";
+            //writeTextMessage(text);
             setBoundaryStateVisible(direction);
             repaint();
         }
@@ -343,27 +343,55 @@ public class ClassicGamePanel extends MapPanelBase {
         repaint();
     }
 
-    private boolean checkVictory(Direction direction, int currentx, int currenty) {
+    private boolean checkVictory(Direction direction, int currentx, int currenty, String text) {
         if(direction == Direction.DOWN) {
             if(myMap.horizontalBorders[currentx][currenty + 1].state() != BorderState.DOOR){
+                text = text.concat(" and bumped into the wall");
+                writeTextMessage(text);
                 return false;
             }
         }
         if(direction == Direction.UP) {
             if(myMap.horizontalBorders[currentx][currenty].state() != BorderState.DOOR){
+                text = text.concat(" and bumped into the wall");
+                writeTextMessage(text);
                 return false;
             }
         }
         if(direction == Direction.LEFT) {
             if(myMap.verticalBorders[currentx][currenty].state() != BorderState.DOOR) {
+                text = text.concat(" and bumped into the wall");
+                writeTextMessage(text);
                 return false;
             }
         }
         if(direction == Direction.RIGHT) {
             if(myMap.verticalBorders[currentx+1][currenty].state() != BorderState.DOOR) {
+                text = text.concat(" and bumped into the wall");
+                writeTextMessage(text);
                 return false;
             }
         }
+
+        text = text.concat(" and found the door");
+        if(character.myKey == null){
+            text = text.concat(" but it is locked");
+            writeTextMessage(text);
+            //repaint();
+            return false;
+        }
+
+        if(!character.myKey.isTrue){
+                text = text.concat(" but you have a wrong key");
+                writeTextMessage(text);
+                //repaint();
+                return false;
+        }
+
+        text = text.concat(" and went out of the labyrinth, congrats!");
+        writeTextMessage(text);
+        //repaint();
+
 
         //todo
         return true;
@@ -465,6 +493,11 @@ public class ClassicGamePanel extends MapPanelBase {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }*/
+                if(character.myKey != null){
+                    PortableMapObject key = character.myKey;
+                    myMap.cells[realCharacterx][realCharactery].mapObjects.add(key);
+                    character.myKey = null;
+                }
                 visibleMap.cells[visibleCharacterx][visibleCharactery].characters.removeElement(character);
                 realCharacterx = myMap.hospitalx;
                 realCharactery = myMap.hospitaly;

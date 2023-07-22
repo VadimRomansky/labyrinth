@@ -11,6 +11,9 @@ import java.io.IOException;
 public class Character extends MapObject {
     public static final int maxBulletCount = 5;
     int bulletCount = maxBulletCount;
+
+    KeyMapObject myKey = null;
+
     @Override
     public void print() {
         System.out.print('C');

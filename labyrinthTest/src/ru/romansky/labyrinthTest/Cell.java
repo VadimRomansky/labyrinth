@@ -21,6 +21,7 @@ public class Cell {
     Vector<Pair<Integer, Integer>> connectedCells;
 
     Vector<MapObject> characters;
+    Vector<PortableMapObject> mapObjects;
     Minotaur minotaur = null;
 
     public Cell(int xv, int yv, int id){
@@ -29,6 +30,7 @@ public class Cell {
         setId = id;
         connectedCells = new Vector<>();
         characters = new Vector<>();
+        mapObjects = new Vector<>();
         type = CellType.SIMPLE_CELL;
         state = CellState.UNDEFINED;
     }
@@ -52,6 +54,9 @@ public class Cell {
             minotaur.paint(g, cellx, celly);
         }
         for (MapObject object : characters) {
+            object.paint(g, cellx, celly);
+        }
+        for(PortableMapObject object : mapObjects){
             object.paint(g, cellx, celly);
         }
     }

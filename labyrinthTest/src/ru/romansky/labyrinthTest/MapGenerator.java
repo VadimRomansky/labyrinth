@@ -26,9 +26,10 @@ public class MapGenerator {
     int portalsCount;
     int regionsCount;
     int maxRegionsCount;
+    int fakeKeysCount;
     private MapPanelBase myMapPanel;
 
-    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, int maxRegions, MapPanelBase mapPanel) {
+    public MapGenerator(int w, int h, int minSize, double stopP, double branchP, boolean allowCyclesV, boolean stopAfterCycleV, int minotaurs, int portals, int maxRegions, int fakeKeys, MapPanelBase mapPanel) {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
@@ -49,6 +50,7 @@ public class MapGenerator {
         minotaurusCount = minotaurs;
         portalsCount = portals;
         maxRegionsCount = maxRegions;
+        fakeKeysCount = fakeKeys;
     }
 
     public MapGenerator(MapGeneratorInfo info, MapPanelBase mapPanel){
@@ -72,6 +74,7 @@ public class MapGenerator {
         minotaurusCount = info.minotaurs;
         portalsCount = info.portals;
         maxRegionsCount = info.maxRegions;
+        fakeKeysCount = info.fakeKeys;
     }
 
     public LabyrinthMap generateEmptyMap() {
@@ -173,6 +176,7 @@ public class MapGenerator {
         for(int i = 0; i < minotaurusCount; ++i) {
             placeMinotaur(regions, map, wayFromHtoA);
         }
+        placeKeys(map);
         placeCharacter(regions, map);
 
         placeExit(map);
@@ -370,8 +374,34 @@ public class MapGenerator {
         firstPortal.prev = lastPortal;
     }
 
-    private void placeFirstMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA){
+    private void placeKeys(LabyrinthMap map){
+        KeyMapObject trueKey = new KeyMapObject(true);
+        placeKey(map, trueKey);
 
+        for(int i = 0; i < fakeKeysCount; ++i) {
+            KeyMapObject fakeKey = new KeyMapObject(false);
+            placeKey(map, fakeKey);
+        }
+    }
+
+    private void placeKey(LabyrinthMap map, KeyMapObject key) {
+        while (true) {
+            int i = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
+            if (cellFitToKey(map, i, j)) {
+                map.cells[i][j].mapObjects.add(key);
+                break;
+            }
+        }
+    }
+
+    private boolean cellFitToKey(LabyrinthMap map, int i, int j) {
+        if(map.cells[i][j].type == CellType.SIMPLE_CELL){
+            if(map.cells[i][j].mapObjects.size() == 0){
+                return true;
+            }
+        }
+        return false;
     }
 
     private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA) {

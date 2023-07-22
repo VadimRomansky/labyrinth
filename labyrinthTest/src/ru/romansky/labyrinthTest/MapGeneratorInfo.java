@@ -11,6 +11,7 @@ public class MapGeneratorInfo {
     public boolean stopAfterCycle;
     public int portals;
     public int minotaurs;
+    public int fakeKeys;
 
     public MapGeneratorInfo(){
 

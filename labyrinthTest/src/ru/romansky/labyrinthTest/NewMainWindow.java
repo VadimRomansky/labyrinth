@@ -446,7 +446,7 @@ public class NewMainWindow {
                     } else if(branchP < 0.0 || branchP > 1.0){
 
                     } else {
-                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, (MapPanelBase) generateMapPanel);
+                        MapGenerator mapGenerator = new MapGenerator(width, height, minSize, stopP, branchP, allowCycle, stopAfterCycle, minotaurs, portals, maxRegions, 1, (MapPanelBase) generateMapPanel);
                         final LabyrinthMap map = mapGenerator.generateEmptyMap();
                         mapGenerator.generateMap(map);
                         ((MapPanelBase) generateMapPanel).resetMap(map);
@@ -601,6 +601,7 @@ public class NewMainWindow {
                 info.maxRegions = (info.width * 2) / 3;
                 info.allowCycle = true;
                 info.stopAfterCycle = true;
+                info.fakeKeys = 0;
                 break;
             case 2:
                 info.stopP = 0.1;
@@ -609,6 +610,7 @@ public class NewMainWindow {
                 info.maxRegions = (info.width * 2) / 3;
                 info.allowCycle = true;
                 info.stopAfterCycle = false;
+                info.fakeKeys = 1;
                 break;
             case 3:
                 info.stopP = 0.05;
@@ -617,6 +619,7 @@ public class NewMainWindow {
                 info.maxRegions = info.width / 2;
                 info.allowCycle = true;
                 info.stopAfterCycle = false;
+                info.fakeKeys = 2;
                 break;
             default:
                 info.stopP = 0.2;
@@ -625,6 +628,7 @@ public class NewMainWindow {
                 info.maxRegions = info.width;
                 info.allowCycle = false;
                 info.stopAfterCycle = false;
+                info.fakeKeys = 3;
                 break;
         }
 
