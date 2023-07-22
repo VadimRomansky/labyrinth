@@ -57,7 +57,7 @@ public class MapGenerator {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
-        //randomSeed = 12;
+        randomSeed = -1518730460;
         random.setSeed(randomSeed);
         System.out.print("random seed = ");
         System.out.print(randomSeed);
@@ -390,6 +390,7 @@ public class MapGenerator {
             int j = random.nextInt(map.height);
             if (cellFitToKey(map, i, j)) {
                 map.cells[i][j].mapObjects.add(key);
+                System.out.print("key at " + i + " " + j + "\n");
                 break;
             }
         }

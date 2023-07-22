@@ -292,6 +292,11 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(objects);
             visibleMap.cells[visibleCharacterx][visibleCharactery].minotaur = myMap.cells[realCharacterx][realCharactery].minotaur;
+            for(PortableMapObject object : myMap.cells[realCharacterx][realCharactery].mapObjects){
+                if(! visibleMap.cells[visibleCharacterx][visibleCharactery].mapObjects.contains(object)) {
+                    visibleMap.cells[visibleCharacterx][visibleCharactery].mapObjects.add(object);
+                }
+            }
             checkCellConflict(visibleCharacterx, visibleCharactery, myMap.cells[realCharacterx][realCharactery]);
             revalidate();
             repaint();
