@@ -14,6 +14,9 @@ import java.util.Vector;
 import static java.lang.Thread.sleep;
 
 public class ClassicGamePanel extends MapPanelBase {
+    private boolean isShowingDialog = true;
+    private String dialogText = "You found a key. Pick it up?";
+    boolean dialogResult;
     private boolean dragMiniMap = false;
     private LabyrinthMap draggedMap;
     private List<LabyrinthMap> draggedList;
@@ -35,6 +38,7 @@ public class ClassicGamePanel extends MapPanelBase {
     public static final Font smallFont = new Font("TimesRoman", Font.PLAIN, 14);;
     public static final Font microFont = new Font("TimesRoman", Font.PLAIN, 10);;
     public static final Font hugeFont = new Font("TimesRoman", Font.PLAIN, 48);;
+    public static final Font middleFont = new Font("TimesRoman", Font.PLAIN, 24);;
     private JPanel myMiniMapPanel;
 
     public ClassicGamePanel(JFrame frame, JPanel parent) {
@@ -44,6 +48,7 @@ public class ClassicGamePanel extends MapPanelBase {
         visibleMap = null;
         setBackground(Color.WHITE);
         additionalMapList = new LinkedList<>();
+        setMouseDialogListener();
     }
     public ClassicGamePanel(JFrame frame, JPanel parent, LabyrinthMap map) {
         this.myFrame = frame;
@@ -91,6 +96,8 @@ public class ClassicGamePanel extends MapPanelBase {
             }
         }
 
+
+        setMouseDialogListener();
     }
 
     public void resetMap(LabyrinthMap map){
@@ -169,18 +176,22 @@ public class ClassicGamePanel extends MapPanelBase {
     @Override
     public void keyPressed(KeyEvent e) {
         if(!gameOver) {
-            int key = e.getKeyCode();
+            if(!isShowingDialog) {
+                int key = e.getKeyCode();
 
-            if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
-                shootBullet(key);
-                return;
-            }
-            if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
-                moveCharacter(key);
-                return;
+                if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                    shootBullet(key);
+                    return;
+                }
+                if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
+                    moveCharacter(key);
+                    return;
+                }
             }
         }
     }
+
+
 
     private void shootBullet(int key) {
         if(character.bulletCount <= 0){
@@ -236,7 +247,7 @@ public class ClassicGamePanel extends MapPanelBase {
             text = text + " The bullet hit the wall.";
         }
         writeTextMessage(text);
-        repaint();
+        //repaint();
     }
 
     private void writeTextMessage(String text) {
@@ -299,10 +310,10 @@ public class ClassicGamePanel extends MapPanelBase {
             }
             checkCellConflict(visibleCharacterx, visibleCharactery, myMap.cells[realCharacterx][realCharactery]);
             revalidate();
-            repaint();
+            //repaint();
             myFrame.revalidate();
             eventAfterMove(text);
-            repaint();
+            //repaint();
         } else if(checkVictory(direction, realCharacterx, realCharactery, text)) {
             //text = text + " and went out of the labyrinth.";
             //writeTextMessage(text);
@@ -312,7 +323,7 @@ public class ClassicGamePanel extends MapPanelBase {
             //text = text + " and bumped into the wall.";
             //writeTextMessage(text);
             setBoundaryStateVisible(direction);
-            repaint();
+            //repaint();
         }
     }
 
@@ -345,7 +356,7 @@ public class ClassicGamePanel extends MapPanelBase {
 
     private void celebrateVictory() {
         gameOver = true;
-        repaint();
+        //repaint();
     }
 
     private boolean checkVictory(Direction direction, int currentx, int currenty, String text) {
@@ -517,13 +528,13 @@ public class ClassicGamePanel extends MapPanelBase {
                 visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(myMap.cells[realCharacterx][realCharactery].characters);
                 text = text + " ,stepped on the minotaur, and he killed you. You woke up in the hospital.";
                 writeTextMessage(text);
-                repaint();
+                //repaint();
                 return;
             } else {
                 myMap.cells[realCharacterx][realCharactery].minotaur.confirmKill();
                 text = text + " and stepped on the minotaur's corpse.";
                 writeTextMessage(text);
-                repaint();
+                //repaint();
                 return;
             }
 
@@ -558,7 +569,7 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleMap.cells[visibleCharacterx][visibleCharactery].state = CellState.VISITED;
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(myMap.cells[realCharacterx][realCharactery].characters);
             visibleMap.cells[visibleCharacterx][visibleCharactery].minotaur = myMap.cells[realCharacterx][realCharactery].minotaur;
-            repaint();
+            //repaint();
             visibleMap.cells[visibleCharacterx][visibleCharactery].characters.removeElement(character);
             PortalCell next = ((PortalCell)myMap.cells[realCharacterx][realCharactery]).next;
             realCharacterx = next.x;
@@ -578,7 +589,7 @@ public class ClassicGamePanel extends MapPanelBase {
             visibleMap.cells[visibleCharacterx][visibleCharactery].minotaur = myMap.cells[realCharacterx][realCharactery].minotaur;
             text = text + ", fall into the potal and got out from another.";
             writeTextMessage(text);
-            repaint();
+            //repaint();
             return;
         }
         text = text + " and went through.";
@@ -637,6 +648,80 @@ public class ClassicGamePanel extends MapPanelBase {
         setMouseListener(miniMapPanel);
         myMiniMapList.add(miniMapPanel);
         myMiniMapPanel.add(miniMapPanel);
+    }
+
+    private void setMouseDialogListener(){
+        this.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(isShowingDialog){
+                    if(SwingUtilities.isLeftMouseButton(e)) {
+                        Point point = e.getPoint();
+                        int x = point.x;
+                        int y = point.y;
+                        if(onLeftDialogButton(x,y)){
+                            isShowingDialog = false;
+                            dialogResult = true;
+                            //repaint();
+                        } else if (onRightDialogButton(x,y)){
+                            isShowingDialog = false;
+                            dialogResult = false;
+                            //repaint();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+    }
+
+    private boolean onLeftDialogButton(int x, int y) {
+        int width = getWidth();
+        int height = getHeight();
+        int dialogWidth = width/4;
+        int dialogHeight = height/4;
+        int buttonWidth = dialogWidth/4;
+        int buttonHeight = dialogHeight/4;
+        int centerx = width/2;
+        int centery = height/2;
+        int buttonx = centerx - dialogWidth/4;
+        int buttony = centery + dialogHeight/6;
+
+        return ((x > buttonx - buttonWidth/2)&&(x < buttonx + buttonWidth/2)&&(y > buttony - buttonHeight/2)&&(y < buttony + buttonHeight/2));
+    }
+
+    private boolean onRightDialogButton(int x, int y) {
+        int width = getWidth();
+        int height = getHeight();
+        int dialogWidth = width/4;
+        int dialogHeight = height/4;
+        int buttonWidth = dialogWidth/4;
+        int buttonHeight = dialogHeight/4;
+        int centerx = width/2;
+        int centery = height/2;
+        int buttonx = centerx + dialogWidth/4;
+        int buttony = centery + dialogHeight/6;
+
+        return ((x > buttonx - buttonWidth/2)&&(x < buttonx + buttonWidth/2)&&(y > buttony - buttonHeight/2)&&(y < buttony + buttonHeight/2));
     }
 
     private void setMouseListener(MiniMapPanel miniMapPanel) {
@@ -1102,7 +1187,57 @@ public class ClassicGamePanel extends MapPanelBase {
                 drawMiniMap(g);
             }
         }
+        if(isShowingDialog){
+            showDialog(dialogText, g);
+        }
         //super.paint(g);
+    }
+
+    private void showDialog(String dialogText, Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        int width = getWidth();
+        int height = getHeight();
+        int dialogWidth = width/4;
+        int dialogHeight = height/4;
+        int buttonWidth = dialogWidth/4;
+        int buttonHeight = dialogHeight/4;
+        int centerx = width/2;
+        int centery = height/2;
+        int buttonx1 = centerx - dialogWidth/4;
+        int buttonx2 = centerx + dialogWidth/4;
+        int buttony = centery + dialogHeight/6;
+        g.setColor(Color.BLACK);
+        g.setFont(middleFont);
+        g2d.fillRect(centerx - dialogWidth/2 - 2, centery - dialogHeight/2 - 2, dialogWidth + 4, dialogHeight + 4);
+        g.setColor(Color.WHITE);
+        g2d.fillRect(centerx - dialogWidth/2, centery - dialogHeight/2, dialogWidth, dialogHeight);
+        g.setColor(Color.BLACK);
+        g2d.fillRect(buttonx1 - buttonWidth/2 - 2, buttony - buttonHeight/2 - 2, buttonWidth+4, buttonHeight+4);
+        g.setColor(Color.WHITE);
+        g2d.fillRect(buttonx1 - buttonWidth/2, buttony - buttonHeight/2, buttonWidth, buttonHeight);
+        g.setColor(Color.BLACK);
+        g2d.fillRect(buttonx2 - buttonWidth/2 - 2, buttony - buttonHeight/2 - 2, buttonWidth+4, buttonHeight+4);
+        g.setColor(Color.WHITE);
+        g2d.fillRect(buttonx2 - buttonWidth/2, buttony - buttonHeight/2, buttonWidth, buttonHeight);
+        g.setColor(Color.BLACK);
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(dialogText);
+        int textHeight = fm.getHeight();
+        g2d.drawString(dialogText, centerx - textWidth/2, centery - dialogHeight/3 + textHeight/2);
+
+        String leftText = "Yes";
+        String rightText = "No";
+        textWidth = fm.stringWidth(leftText);
+        textHeight = fm.getHeight();
+        g2d.drawString(leftText, buttonx1 - textWidth/2, buttony + textHeight/2 - 10);
+
+        textWidth = fm.stringWidth(rightText);
+        textHeight = fm.getHeight();
+        g2d.drawString(rightText, buttonx2 - textWidth/2, buttony + textHeight/2 - 10);
+
+
+        g.setFont(smallFont);
+        g.setColor(Color.BLACK);
     }
 
     private void drawMiniMap(Graphics g) {
@@ -1238,6 +1373,16 @@ public class ClassicGamePanel extends MapPanelBase {
         g2d.drawString(text, 10, 10 + textHeight + fm.getAscent());
         text = "Bullets: " + character.bulletCount;
         g2d.drawString(text, 10, 10 + 2*textHeight + fm.getAscent());
+        if(character.myKey == null){
+            text = "Key: not found";
+            g2d.drawString(text, 10, 10 + 3*textHeight + fm.getAscent());
+        } else {
+            text = "Key: ";
+            int textWidth = fm.stringWidth(text);
+            g2d.drawString(text, 10, 10 + 3*textHeight + fm.getAscent());
+            character.myKey.paint(g, 10 + textWidth + cellWidth/2, 10 + 3*textHeight + cellWidth/2);
+
+        }
     }
 
     private void paintCell(Graphics g, int cellx, int celly, Cell cell) {

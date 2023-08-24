@@ -355,23 +355,29 @@ public class MapGenerator {
             PortalCell portal = portals.remove(index);
             sortedPortals.add(i, portal);
         }
-        for(int i = 0; i < portalsCount - 1; ++i){
-            PortalCell portal = sortedPortals.get(i);
-            PortalCell nextPortal = sortedPortals.get(i+1);
-            portal.setNumber(i+1);
-            portal.setPortalCoordinates(nextPortal.x, nextPortal.y);
-            portal.next = nextPortal;
-            if(i > 0){
-                portal.prev = sortedPortals.get(i-1);
-            }
+        if(portalsCount == 1){
+            System.out.println("portals number can not be 1");
+            System.exit(0);
         }
-        PortalCell lastPortal = sortedPortals.get(portalsCount - 1);
-        PortalCell firstPortal = sortedPortals.get(0);
-        lastPortal.setNumber(portalsCount);
-        lastPortal.setPortalCoordinates(firstPortal.x, firstPortal.y);
-        lastPortal.prev = sortedPortals.get(portalsCount - 2);
-        lastPortal.next = firstPortal;
-        firstPortal.prev = lastPortal;
+        if(portalsCount > 1) {
+            for (int i = 0; i < portalsCount - 1; ++i) {
+                PortalCell portal = sortedPortals.get(i);
+                PortalCell nextPortal = sortedPortals.get(i + 1);
+                portal.setNumber(i + 1);
+                portal.setPortalCoordinates(nextPortal.x, nextPortal.y);
+                portal.next = nextPortal;
+                if (i > 0) {
+                    portal.prev = sortedPortals.get(i - 1);
+                }
+            }
+            PortalCell lastPortal = sortedPortals.get(portalsCount - 1);
+            PortalCell firstPortal = sortedPortals.get(0);
+            lastPortal.setNumber(portalsCount);
+            lastPortal.setPortalCoordinates(firstPortal.x, firstPortal.y);
+            lastPortal.prev = sortedPortals.get(portalsCount - 2);
+            lastPortal.next = firstPortal;
+            firstPortal.prev = lastPortal;
+        }
     }
 
     private void placeKeys(LabyrinthMap map){
@@ -573,26 +579,28 @@ public class MapGenerator {
     }
 
     private void placePortalToEveryRegion(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
-        for (int i = 0; i < regions.size(); ++i) {
-            Vector<Pair<Integer, Integer>> region = regions.get(i).getValue();
-            int hiddenCellNumber = 0;
-            int hiddenCellBorders = 0;
-            for (int j = 0; j < region.size(); ++j) {
-                int x = region.get(j).getKey();
-                int y = region.get(j).getValue();
-                int borderCount = 4 - map.cells[x][y].connectedCells.size();
-                if (borderCount >= hiddenCellBorders) {
-                    hiddenCellNumber = j;
-                    hiddenCellBorders = borderCount;
+        if(regions.size() > 1) {
+            for (int i = 0; i < regions.size(); ++i) {
+                Vector<Pair<Integer, Integer>> region = regions.get(i).getValue();
+                int hiddenCellNumber = 0;
+                int hiddenCellBorders = 0;
+                for (int j = 0; j < region.size(); ++j) {
+                    int x = region.get(j).getKey();
+                    int y = region.get(j).getValue();
+                    int borderCount = 4 - map.cells[x][y].connectedCells.size();
+                    if (borderCount >= hiddenCellBorders) {
+                        hiddenCellNumber = j;
+                        hiddenCellBorders = borderCount;
+                    }
+                    //todo rendomize!
                 }
-                //todo rendomize!
+                int px = region.get(hiddenCellNumber).getKey();
+                int py = region.get(hiddenCellNumber).getValue();
+                //PortalCell portal = new PortalCell(-1, map.cells[px][py]);
+                PortalCell portal = new PortalCell(i, map.cells[px][py]);
+                map.cells[px][py] = portal;
+                map.portalsCount++;
             }
-            int px = region.get(hiddenCellNumber).getKey();
-            int py = region.get(hiddenCellNumber).getValue();
-            //PortalCell portal = new PortalCell(-1, map.cells[px][py]);
-            PortalCell portal = new PortalCell(i, map.cells[px][py]);
-            map.cells[px][py] = portal;
-            map.portalsCount++;
         }
     }
 

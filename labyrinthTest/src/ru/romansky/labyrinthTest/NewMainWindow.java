@@ -323,16 +323,35 @@ public class NewMainWindow {
         myFrame.pack();
         Locale.setDefault(Locale.UK);
         //todo exit
-        Timer timer = new Timer(20, new ActionListener() {
+        /*Timer timer = new Timer(20, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 myFrame.repaint();
             }
-        });
+        });*/
         myFrame.setVisible(true);
-        timer.start();
+        //timer.start();
 
+    }
+
+    public void repaint(){
+        myFrame.repaint();
+        if(myMode == MainWindowMode.MENU){
+            menuPanel.repaint();
+        } else if (myMode == MainWindowMode.CLASSICGAME){
+            classicGamePanel.repaint();
+        } else if(myMode == MainWindowMode.GENERATOR){
+            generatorPanel.repaint();
+        } else if(myMode == MainWindowMode.HELP){
+            helpPanel.repaint();
+        } else if(myMode == MainWindowMode.OPTIONS){
+            optionsPanel.repaint();
+        } else if(myMode == MainWindowMode.STARTGAME){
+            startGamePanel.repaint();
+        } else if(myMode == MainWindowMode.SIMPLEGAME){
+            simpleGamePanel.repaint();
+        }
     }
 
     private void setupSimpleGamePanel() {
@@ -378,6 +397,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myFrame.dispose();
+                System.exit(0);
             }
         });
     }
@@ -519,6 +539,7 @@ public class NewMainWindow {
         startMinotaursComboBox.addItem("high");
         startMinotaursComboBox.addItem("they are everywhere!");
 
+        startPortalsComboBox.addItem("zero");
         startPortalsComboBox.addItem("low");
         startPortalsComboBox.addItem("middle");
         startPortalsComboBox.addItem("high");
@@ -564,7 +585,7 @@ public class NewMainWindow {
                     ((ClassicGamePanel) classicGameMapPanel).restart();
 
                     //map.print();
-                    classicGameMapPanel.repaint();
+                    //classicGameMapPanel.repaint();
 
                 } catch (NumberFormatException ne){
 
@@ -636,13 +657,15 @@ public class NewMainWindow {
         int portalsType = startPortalsComboBox.getSelectedIndex();
         switch (portalsType) {
             case 1:
+                info.portals = info.width / 2 + 1;
+            case 2:
                 info.portals = info.width / 2 + info.width * info.height / 20;
                 break;
-            case 2:
+            case 3:
                 info.portals = info.width / 2 + info.width * info.height / 10;
                 break;
             default:
-                info.portals = info.width / 2 + 1;
+                info.portals = 0;
                 break;
         }
 
@@ -705,6 +728,7 @@ public class NewMainWindow {
             @Override
             public void actionPerformed(ActionEvent e) {
                 myFrame.dispose();
+                System.exit(0);
             }
         });
     }

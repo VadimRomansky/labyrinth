@@ -22,5 +22,22 @@ public class Main {
         //MainWindow window = new MainWindow();
         NewMainWindow window = new NewMainWindow();
         window.show();
+        Thread UIthread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int fps = 60;
+                synchronized (this) {
+                    try{
+                        while(true) {
+                            wait(1000 / fps);
+                            window.repaint();
+                        }
+                        } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        UIthread.run();
     }
 }
