@@ -7,10 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-enum GameState {NORMAL, GAME_OVER, DIALOG_ONE_KEY, DIALOG_MULTI_KEY}
-
 public class LabEngine implements Runnable {
-    GameState gameState;
     Character character;
     LabyrinthMap map;
 
@@ -23,7 +20,6 @@ public class LabEngine implements Runnable {
 
     LabEngine(LabyrinthMap m, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2, ClassicGamePanel panel){
         map = m;
-        gameState = GameState.NORMAL;
         myGamePanel = panel;
 
         fromClientToServer = queue1;
@@ -69,40 +65,24 @@ public class LabEngine implements Runnable {
                     //System.out.println("not null event");
                     //fromServerToClient.add(serverEvent);
                     //notifyAll();
-                    if(gameEvent instanceof KeyGameEvent) {
-                        int key = ((KeyGameEvent) gameEvent).keyCode;
-                        if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
-                            myGamePanel.shootBullet(key);
-                            return;
-                        } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
-                            myGamePanel.moveCharacter(key);
+                    if(myGamePanel.gameState == GameState.NORMAL) {
+                        if (gameEvent instanceof KeyGameEvent) {
+                            int key = ((KeyGameEvent) gameEvent).keyCode;
+                            if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                                myGamePanel.shootBullet(key);
+                                return;
+                            } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
+                                myGamePanel.moveCharacter(key);
+                            }
+                        }
+                    } else if(myGamePanel.gameState == GameState.DIALOG_ONE_KEY){
+                        if (gameEvent instanceof DialogGameEvent) {
+                            int number = ((DialogGameEvent) gameEvent).chosenNumber;
+                            myGamePanel.handleDialog(number);
                         }
                     }
                 }
             }
         }
     }
-
-    ServerEvent handleGameEvent(GameEvent gameEvent){
-        if(gameEvent instanceof KeyGameEvent){
-            if(gameState == GameState.NORMAL){
-                return handleKeyGameEvent((KeyGameEvent) gameEvent);
-            }
-        } else if(gameEvent instanceof  DialogGameEvent){
-            if(gameState == GameState.DIALOG_ONE_KEY || gameState == GameState.DIALOG_MULTI_KEY){
-                return handleDialogGameEvent(gameEvent);
-            }
-        }
-
-        return new EmptyServerEvent();
-    }
-
-    private ServerEvent handleDialogGameEvent(GameEvent gameEvent) {
-        return null;
-    }
-
-    private ServerEvent handleKeyGameEvent(KeyGameEvent gameEvent) {
-        return null;
-    }
-
 }

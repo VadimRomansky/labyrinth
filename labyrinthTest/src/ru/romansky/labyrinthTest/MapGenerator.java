@@ -394,6 +394,8 @@ public class MapGenerator {
         while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
+            //int i = 2;
+            //int j = 4;
             if (cellFitToKey(map, i, j)) {
                 map.cells[i][j].mapObjects.add(key);
                 System.out.print("key at " + i + " " + j + "\n");

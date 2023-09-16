@@ -14,12 +14,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
+import static java.lang.Math.floor;
+import static java.lang.Math.round;
 import static java.lang.Thread.sleep;
 
+enum GameState {NORMAL, GAME_OVER, DIALOG_ONE_KEY}
+
 public class ClassicGamePanel extends MapPanelBase {
-    private boolean isShowingDialog = true;
+    public GameState gameState;
     private String dialogText = "You found a key. Pick it up?";
-    boolean dialogResult;
+    private int numberOfFoundKeys = 0;
     private boolean dragMiniMap = false;
     private LabyrinthMap draggedMap;
     private List<LabyrinthMap> draggedList;
@@ -56,6 +60,7 @@ public class ClassicGamePanel extends MapPanelBase {
         setBackground(Color.WHITE);
         additionalMapList = new LinkedList<>();
         setMouseDialogListener();
+        gameState = GameState.NORMAL;
     }
     public ClassicGamePanel(JFrame frame, JPanel parent, LabyrinthMap map, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2) {
         this.myFrame = frame;
@@ -65,6 +70,7 @@ public class ClassicGamePanel extends MapPanelBase {
         myMap = map;
         visibleMap = new LabyrinthMap(2*myMap.width-1, 2*myMap.height-1);
         additionalMapList = new LinkedList<>();
+        gameState = GameState.NORMAL;
 
         for(int i = 0; i < myMap.width; ++i){
             for(int j = 0; j < myMap.height; ++j){
@@ -185,7 +191,7 @@ public class ClassicGamePanel extends MapPanelBase {
     @Override
     public void keyPressed(KeyEvent e) {
         if(!gameOver) {
-            if(!isShowingDialog) {
+            if(gameState == GameState.NORMAL) {
                 int key = e.getKeyCode();
 
                 fromClientToServer.add(new KeyGameEvent(key));
@@ -369,6 +375,7 @@ public class ClassicGamePanel extends MapPanelBase {
     }
 
     private void celebrateVictory() {
+        gameState = GameState.GAME_OVER;
         gameOver = true;
         //repaint();
     }
@@ -549,7 +556,7 @@ public class ClassicGamePanel extends MapPanelBase {
                 text = text + " and stepped on the minotaur's corpse.";
                 writeTextMessage(text);
                 //repaint();
-                return;
+                //return;
             }
 
         }
@@ -573,6 +580,11 @@ public class ClassicGamePanel extends MapPanelBase {
             text = text + " and got into the hospital.";
             writeTextMessage(text);
             return;
+        }
+        if(myMap.cells[realCharacterx][realCharactery].mapObjects.stream().anyMatch(o->o instanceof KeyMapObject)){
+            Object[] keys = myMap.cells[realCharacterx][realCharactery].mapObjects.stream().filter(o -> o instanceof KeyMapObject).toArray();
+            numberOfFoundKeys = keys.length;
+            gameState = GameState.DIALOG_ONE_KEY;
         }
         if(myMap.cells[realCharacterx][realCharactery].type == CellType.PORTAL) {
             visibleMap.cells[visibleCharacterx][visibleCharactery] = new PortalCell(((PortalCell)myMap.cells[realCharacterx][realCharactery]).number, visibleCharacterx,visibleCharactery, 0);
@@ -668,19 +680,22 @@ public class ClassicGamePanel extends MapPanelBase {
         this.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(isShowingDialog){
+                if(gameState == GameState.DIALOG_ONE_KEY){
                     if(SwingUtilities.isLeftMouseButton(e)) {
                         Point point = e.getPoint();
                         int x = point.x;
                         int y = point.y;
-                        if(onLeftDialogButton(x,y)){
-                            isShowingDialog = false;
-                            dialogResult = true;
-                            //repaint();
-                        } else if (onRightDialogButton(x,y)){
-                            isShowingDialog = false;
-                            dialogResult = false;
-                            //repaint();
+                        int number = onWhichDialogButton(x,y);
+                        if (number == numberOfFoundKeys){
+                            number = 0;
+                        } else {
+                            if(number >= 0){
+                                number = number + 1;
+                            }
+                        }
+
+                        if(number > -1){
+                            fromClientToServer.add(new DialogGameEvent(number));
                         }
                     }
                 }
@@ -708,34 +723,30 @@ public class ClassicGamePanel extends MapPanelBase {
         });
     }
 
-    private boolean onLeftDialogButton(int x, int y) {
+    private int onWhichDialogButton(int x, int y) {
         int width = getWidth();
         int height = getHeight();
         int dialogWidth = width/4;
         int dialogHeight = height/4;
-        int buttonWidth = dialogWidth/4;
+        int buttonWidth = dialogWidth*9/(10*(numberOfFoundKeys + 1));
+        int buttonDelta = dialogWidth/((numberOfFoundKeys + 1));
         int buttonHeight = dialogHeight/4;
         int centerx = width/2;
         int centery = height/2;
-        int buttonx = centerx - dialogWidth/4;
         int buttony = centery + dialogHeight/6;
 
-        return ((x > buttonx - buttonWidth/2)&&(x < buttonx + buttonWidth/2)&&(y > buttony - buttonHeight/2)&&(y < buttony + buttonHeight/2));
-    }
+        if((y < buttony - buttonHeight/2)||(y > buttony + buttonHeight/2)){
+            return -1;
+        }
+        if((x < centerx - dialogWidth/2)||(x > centerx + dialogWidth/2)){
+            return -1;
+        }
+        int n = (x - (centerx - dialogWidth/2))/buttonDelta;
+        if((x < (int) round(centerx - dialogWidth/2 + buttonDelta*(0.5 + n)) - buttonWidth / 2)||(x > (int) round(centerx - dialogWidth/2 + buttonDelta*(0.5 + n)) + buttonWidth / 2)){
+            return -1;
+        }
 
-    private boolean onRightDialogButton(int x, int y) {
-        int width = getWidth();
-        int height = getHeight();
-        int dialogWidth = width/4;
-        int dialogHeight = height/4;
-        int buttonWidth = dialogWidth/4;
-        int buttonHeight = dialogHeight/4;
-        int centerx = width/2;
-        int centery = height/2;
-        int buttonx = centerx + dialogWidth/4;
-        int buttony = centery + dialogHeight/6;
-
-        return ((x > buttonx - buttonWidth/2)&&(x < buttonx + buttonWidth/2)&&(y > buttony - buttonHeight/2)&&(y < buttony + buttonHeight/2));
+        return n;
     }
 
     private void setMouseListener(MiniMapPanel miniMapPanel) {
@@ -1201,7 +1212,7 @@ public class ClassicGamePanel extends MapPanelBase {
                 drawMiniMap(g);
             }
         }
-        if(isShowingDialog){
+        if(gameState == GameState.DIALOG_ONE_KEY){
             showDialog(dialogText, g);
         }
         //super.paint(g);
@@ -1213,41 +1224,76 @@ public class ClassicGamePanel extends MapPanelBase {
         int height = getHeight();
         int dialogWidth = width/4;
         int dialogHeight = height/4;
-        int buttonWidth = dialogWidth/4;
+        int buttonWidth = dialogWidth*9/(10*(numberOfFoundKeys + 1));
+        int buttonDelta = dialogWidth/((numberOfFoundKeys + 1));
         int buttonHeight = dialogHeight/4;
         int centerx = width/2;
         int centery = height/2;
-        int buttonx1 = centerx - dialogWidth/4;
-        int buttonx2 = centerx + dialogWidth/4;
         int buttony = centery + dialogHeight/6;
         g.setColor(Color.BLACK);
         g.setFont(middleFont);
         g2d.fillRect(centerx - dialogWidth/2 - 2, centery - dialogHeight/2 - 2, dialogWidth + 4, dialogHeight + 4);
         g.setColor(Color.WHITE);
         g2d.fillRect(centerx - dialogWidth/2, centery - dialogHeight/2, dialogWidth, dialogHeight);
-        g.setColor(Color.BLACK);
-        g2d.fillRect(buttonx1 - buttonWidth/2 - 2, buttony - buttonHeight/2 - 2, buttonWidth+4, buttonHeight+4);
-        g.setColor(Color.WHITE);
-        g2d.fillRect(buttonx1 - buttonWidth/2, buttony - buttonHeight/2, buttonWidth, buttonHeight);
-        g.setColor(Color.BLACK);
-        g2d.fillRect(buttonx2 - buttonWidth/2 - 2, buttony - buttonHeight/2 - 2, buttonWidth+4, buttonHeight+4);
-        g.setColor(Color.WHITE);
-        g2d.fillRect(buttonx2 - buttonWidth/2, buttony - buttonHeight/2, buttonWidth, buttonHeight);
-        g.setColor(Color.BLACK);
+        for(int i = 0; i < numberOfFoundKeys + 1; ++i) {
+            g.setColor(Color.BLACK);
+            g2d.fillRect((int) round(centerx - dialogWidth/2 + buttonDelta*(0.5 + i)) - buttonWidth / 2 - 2, buttony - buttonHeight / 2 - 2, buttonWidth + 4, buttonHeight + 4);
+            g.setColor(Color.WHITE);
+            g2d.fillRect((int) round(centerx - dialogWidth/2 + buttonDelta*(0.5 + i)) - buttonWidth / 2, buttony - buttonHeight / 2, buttonWidth, buttonHeight);
+            g.setColor(Color.BLACK);
+        }
         FontMetrics fm = g2d.getFontMetrics();
-        int textWidth = fm.stringWidth(dialogText);
+        String text = "You found ";
+        if(numberOfFoundKeys == 1){
+            text = text + " a key.";
+        } else {
+            text = text + numberOfFoundKeys + " keys.";
+        }
+        if(character.myKey == null){
+            text = text + " Pick it up?";
+        } else {
+            text = text + " Change your key to it?";
+        }
+        int textWidth = fm.stringWidth(text);
         int textHeight = fm.getHeight();
-        g2d.drawString(dialogText, centerx - textWidth/2, centery - dialogHeight/3 + textHeight/2);
+        g2d.drawString(text, centerx - textWidth/2, centery - dialogHeight/3 + textHeight/2);
 
-        String leftText = "Yes";
-        String rightText = "No";
-        textWidth = fm.stringWidth(leftText);
-        textHeight = fm.getHeight();
-        g2d.drawString(leftText, buttonx1 - textWidth/2, buttony + textHeight/2 - 10);
-
-        textWidth = fm.stringWidth(rightText);
-        textHeight = fm.getHeight();
-        g2d.drawString(rightText, buttonx2 - textWidth/2, buttony + textHeight/2 - 10);
+        String[] strings = new String[numberOfFoundKeys+1];
+        if(numberOfFoundKeys == 1){
+            strings[0] = "Yes";
+            strings[1] = "No";
+        } else {
+            if(character.myKey == null){
+                strings[0] = "Pick first";
+                if(numberOfFoundKeys > 1){
+                    strings[1] = "Pick second";
+                }
+                if(numberOfFoundKeys > 2){
+                    strings[2] = "Pick third";
+                }
+                if(numberOfFoundKeys > 3){
+                    strings[3] = "Pick fourth";
+                }
+            } else {
+                strings[0] = "Change to first";
+                if(numberOfFoundKeys > 1){
+                    strings[1] = "Change to second";
+                }
+                if(numberOfFoundKeys > 2){
+                    strings[2] = "Change to third";
+                }
+                if(numberOfFoundKeys > 3){
+                    strings[3] = "Change to fourth";
+                }
+            }
+            strings[numberOfFoundKeys] = "No";
+        }
+        g.setFont(smallFont);
+        for(int i = 0; i < numberOfFoundKeys + 1; ++i) {
+            textWidth = fm.stringWidth(strings[i]);
+            textHeight = fm.getHeight();
+            g2d.drawString(strings[i], (int) round(centerx - dialogWidth/2 + buttonDelta*(0.5 + i)) - textWidth / 2, buttony + textHeight / 2 - 10);
+        }
 
 
         g.setFont(smallFont);
@@ -1404,6 +1450,7 @@ public class ClassicGamePanel extends MapPanelBase {
     }
 
     public void restart() {
+        gameState = GameState.NORMAL;
         gameOver = false;
         stepNumber = 0;
         myTextArea.setText("");
@@ -1517,6 +1564,23 @@ public class ClassicGamePanel extends MapPanelBase {
 
     public void removeMiniMap(MiniMapPanel map) {
         myMiniMapList.remove(map);
+    }
+
+    public void handleDialog(int number) {
+        gameState = GameState.NORMAL;
+        if(number == 0){
+            return;
+        }
+        Object[] keys = myMap.cells[realCharacterx][realCharactery].mapObjects.stream().filter(o -> o instanceof KeyMapObject).toArray();
+        KeyMapObject key = (KeyMapObject) keys[number-1];
+        myMap.cells[realCharacterx][realCharactery].mapObjects.removeElement(key);
+        visibleMap.cells[visibleCharacterx][visibleCharactery].mapObjects.removeElement(key);
+        KeyMapObject tempKey = character.myKey;
+        character.myKey = key;
+        if(tempKey != null){
+            myMap.cells[realCharacterx][realCharactery].mapObjects.add(tempKey);
+            visibleMap.cells[realCharacterx][realCharactery].mapObjects.add(tempKey);
+        }
     }
 
     private class IndexContainer{
