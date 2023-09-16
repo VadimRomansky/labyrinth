@@ -207,7 +207,7 @@ public class ClassicGamePanel extends MapPanelBase {
 
 
 
-    private void shootBullet(int key) {
+    public void shootBullet(int key) {
         if(character.bulletCount <= 0){
             return;
         }
@@ -272,7 +272,7 @@ public class ClassicGamePanel extends MapPanelBase {
         myTextArea.setCaretPosition(textPosition);
     }
 
-    private void moveCharacter(int key) {
+    public void moveCharacter(int key) {
         if(visibleMap == null){
             return;
         }

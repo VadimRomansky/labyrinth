@@ -594,7 +594,7 @@ public class NewMainWindow {
                     mapGenerator.generateMap(map);
                     ((MapPanelBase) classicGameMapPanel).resetMap(map);
                     ((ClassicGamePanel) classicGameMapPanel).restart();
-                    LabEngine engine = new LabEngine(map, fromClientToServer, fromServerToClient);
+                    LabEngine engine = new LabEngine(map, fromClientToServer, fromServerToClient, (ClassicGamePanel) classicGameMapPanel);
                     myLayout.show(mainPanel, "classicgame");
                     myMode = MainWindowMode.CLASSICGAME;
                     //myFrame.requestFocus();

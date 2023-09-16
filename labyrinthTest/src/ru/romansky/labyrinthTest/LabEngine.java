@@ -1,5 +1,6 @@
 package ru.romansky.labyrinthTest;
 
+import java.awt.event.KeyEvent;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -18,10 +19,12 @@ public class LabEngine implements Runnable {
 
     LinkedBlockingQueue<GameEvent> fromClientToServer;
     LinkedBlockingQueue<ServerEvent> fromServerToClient;
+    ClassicGamePanel myGamePanel;
 
-    LabEngine(LabyrinthMap m, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2){
+    LabEngine(LabyrinthMap m, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2, ClassicGamePanel panel){
         map = m;
         gameState = GameState.NORMAL;
+        myGamePanel = panel;
 
         fromClientToServer = queue1;
         fromServerToClient = queue2;
@@ -62,10 +65,19 @@ public class LabEngine implements Runnable {
                 }
                 System.out.println("take");
                 if(gameEvent != null) {
-                    ServerEvent serverEvent = handleGameEvent(gameEvent);
-                    System.out.println("not null event");
-                    fromServerToClient.add(serverEvent);
-                    notifyAll();
+                    //ServerEvent serverEvent = handleGameEvent(gameEvent);
+                    //System.out.println("not null event");
+                    //fromServerToClient.add(serverEvent);
+                    //notifyAll();
+                    if(gameEvent instanceof KeyGameEvent) {
+                        int key = ((KeyGameEvent) gameEvent).keyCode;
+                        if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                            myGamePanel.shootBullet(key);
+                            return;
+                        } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
+                            myGamePanel.moveCharacter(key);
+                        }
+                    }
                 }
             }
         }
