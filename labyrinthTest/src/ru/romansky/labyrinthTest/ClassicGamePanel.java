@@ -10,6 +10,9 @@ import java.awt.event.MouseListener;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 import static java.lang.Thread.sleep;
 
@@ -40,19 +43,25 @@ public class ClassicGamePanel extends MapPanelBase {
     public static final Font hugeFont = new Font("TimesRoman", Font.PLAIN, 48);;
     public static final Font middleFont = new Font("TimesRoman", Font.PLAIN, 24);;
     private JPanel myMiniMapPanel;
+    LinkedBlockingQueue<GameEvent> fromClientToServer;
+    LinkedBlockingQueue<ServerEvent> fromServerToClient;
 
-    public ClassicGamePanel(JFrame frame, JPanel parent) {
+    public ClassicGamePanel(JFrame frame, JPanel parent, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2) {
         this.myFrame = frame;
         this.myParent = parent;
+        fromClientToServer = queue1;
+        fromServerToClient = queue2;
         myMap = null;
         visibleMap = null;
         setBackground(Color.WHITE);
         additionalMapList = new LinkedList<>();
         setMouseDialogListener();
     }
-    public ClassicGamePanel(JFrame frame, JPanel parent, LabyrinthMap map) {
+    public ClassicGamePanel(JFrame frame, JPanel parent, LabyrinthMap map, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2) {
         this.myFrame = frame;
         this.myParent = parent;
+        fromClientToServer = queue1;
+        fromServerToClient = queue2;
         myMap = map;
         visibleMap = new LabyrinthMap(2*myMap.width-1, 2*myMap.height-1);
         additionalMapList = new LinkedList<>();
@@ -179,14 +188,19 @@ public class ClassicGamePanel extends MapPanelBase {
             if(!isShowingDialog) {
                 int key = e.getKeyCode();
 
-                if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
+                fromClientToServer.add(new KeyGameEvent(key));
+                System.out.println("put");
+                //notifyAll();
+
+                /*if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
                     shootBullet(key);
                     return;
                 }
                 if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
                     moveCharacter(key);
                     return;
-                }
+                }*/
+
             }
         }
     }

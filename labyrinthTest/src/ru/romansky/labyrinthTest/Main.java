@@ -38,6 +38,6 @@ public class Main {
                 }
             }
         });
-        UIthread.run();
+        UIthread.start();
     }
 }

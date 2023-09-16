@@ -10,6 +10,9 @@ import java.awt.geom.Ellipse2D;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 enum MainWindowMode {MENU, OPTIONS, HELP, GENERATOR, STARTGAME, SIMPLEGAME, CLASSICGAME};
 
@@ -91,7 +94,10 @@ public class NewMainWindow {
     private JPanel helpMainScreenPanel;
     private JButton helpExitButton;
 
+    LinkedBlockingQueue<GameEvent> fromClientToServer;
+    LinkedBlockingQueue<ServerEvent> fromServerToClient;
     private MainWindowMode myMode;
+    Thread engineThread;
 
     public NewMainWindow(){
         mainPanel.removeAll();
@@ -147,8 +153,11 @@ public class NewMainWindow {
         //mainPanel.add(simpleGamePanel,"game");
 
         //simpleGameMapPanel = new MapPanel(myFrame, mainPanel);
+
+        fromServerToClient = new LinkedBlockingQueue<>();
+        fromClientToServer = new LinkedBlockingQueue<>();
         simpleGameMapPanel = new SimpleGamePanel(myFrame, simpleGamePanel);
-        classicGameMapPanel = new ClassicGamePanel(myFrame, classicGamePanel);
+        classicGameMapPanel = new ClassicGamePanel(myFrame, classicGamePanel, fromClientToServer, fromServerToClient);
         generateMapPanel = new MapPanel(myFrame, generateMapPanel);
 
 
@@ -390,12 +399,14 @@ public class NewMainWindow {
             public void actionPerformed(ActionEvent e) {
                 myLayout.show(mainPanel, "startgame");
                 myMode = MainWindowMode.STARTGAME;
+                engineThread.interrupt();
             }
         });
 
         classicGameExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                engineThread.interrupt();
                 myFrame.dispose();
                 System.exit(0);
             }
@@ -583,18 +594,20 @@ public class NewMainWindow {
                     mapGenerator.generateMap(map);
                     ((MapPanelBase) classicGameMapPanel).resetMap(map);
                     ((ClassicGamePanel) classicGameMapPanel).restart();
-
+                    LabEngine engine = new LabEngine(map, fromClientToServer, fromServerToClient);
+                    myLayout.show(mainPanel, "classicgame");
+                    myMode = MainWindowMode.CLASSICGAME;
+                    //myFrame.requestFocus();
+                    engineThread = new Thread(engine);
+                    engineThread.start();
                     //map.print();
-                    //classicGameMapPanel.repaint();
+                    classicGameMapPanel.repaint();
 
                 } catch (NumberFormatException ne){
 
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                myLayout.show(mainPanel, "classicgame");
-                myMode = MainWindowMode.CLASSICGAME;
-                myFrame.requestFocus();
             }
         });
 

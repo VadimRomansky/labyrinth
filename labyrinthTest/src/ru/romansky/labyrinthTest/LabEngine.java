@@ -1,7 +1,10 @@
 package ru.romansky.labyrinthTest;
 
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 enum GameState {NORMAL, GAME_OVER, DIALOG_ONE_KEY, DIALOG_MULTI_KEY}
 
@@ -13,12 +16,15 @@ public class LabEngine implements Runnable {
     int characterx;
     int charactery;
 
-    SynchronousQueue<GameEvent> fromClientToServer;
-    SynchronousQueue<ServerEvent> fromServerToClient;
+    LinkedBlockingQueue<GameEvent> fromClientToServer;
+    LinkedBlockingQueue<ServerEvent> fromServerToClient;
 
-    LabEngine(LabyrinthMap m){
+    LabEngine(LabyrinthMap m, LinkedBlockingQueue<GameEvent> queue1, LinkedBlockingQueue<ServerEvent> queue2){
         map = m;
         gameState = GameState.NORMAL;
+
+        fromClientToServer = queue1;
+        fromServerToClient = queue2;
 
 
         for(int i = 0; i < map.width; ++i){
@@ -43,21 +49,24 @@ public class LabEngine implements Runnable {
     public void run() {
         synchronized (this) {
             while (true) {
-                try {
+                /*try {
                     wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
-                GameEvent gameEvent = fromClientToServer.poll();
-
-                ServerEvent serverEvet = handleGameEvent(gameEvent);
-
+                }*/
+                GameEvent gameEvent = null;
                 try {
-                    fromServerToClient.put(serverEvet);
+                    gameEvent = fromClientToServer.take();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                notify();
+                System.out.println("take");
+                if(gameEvent != null) {
+                    ServerEvent serverEvent = handleGameEvent(gameEvent);
+                    System.out.println("not null event");
+                    fromServerToClient.add(serverEvent);
+                    notifyAll();
+                }
             }
         }
     }
