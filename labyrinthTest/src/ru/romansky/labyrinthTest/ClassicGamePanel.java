@@ -13,6 +13,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
+import java.util.function.Predicate;
 
 import static java.lang.Math.floor;
 import static java.lang.Math.round;
@@ -331,8 +332,8 @@ public class ClassicGamePanel extends MapPanelBase {
             checkCellConflict(visibleCharacterx, visibleCharactery, myMap.cells[realCharacterx][realCharactery]);
             revalidate();
             //repaint();
-            myFrame.revalidate();
             eventAfterMove(text);
+            myFrame.revalidate();
             //repaint();
         } else if(checkVictory(direction, realCharacterx, realCharactery, text)) {
             //text = text + " and went out of the labyrinth.";
@@ -549,6 +550,13 @@ public class ClassicGamePanel extends MapPanelBase {
                 visibleMap.cells[visibleCharacterx][visibleCharactery].characters.addAll(myMap.cells[realCharacterx][realCharactery].characters);
                 text = text + " ,stepped on the minotaur, and he killed you. You woke up in the hospital.";
                 writeTextMessage(text);
+                MiniMapPanel miniMapPanel = getLargestMiniMapWithPredicate(o -> o.hasHospital());
+                if(miniMapPanel != null){
+                    Pair<Integer, Integer> hospitalCoordinates = miniMapPanel.getCellCoordinates(c -> c instanceof  HospitalCell);
+                    int shiftx = visibleMap.width/2 - hospitalCoordinates.getKey();
+                    int shifty = visibleMap.height/2 - hospitalCoordinates.getValue();
+                    addMiniMap(miniMapPanel.getMaps(),shiftx,shifty);
+                }
                 //repaint();
                 return;
             } else {
@@ -1259,31 +1267,18 @@ public class ClassicGamePanel extends MapPanelBase {
         g2d.drawString(text, centerx - textWidth/2, centery - dialogHeight/3 + textHeight/2);
 
         String[] strings = new String[numberOfFoundKeys+1];
+        Object[] keys = myMap.cells[realCharacterx][realCharactery].mapObjects.stream().filter(o -> o instanceof KeyMapObject).toArray();
         if(numberOfFoundKeys == 1){
             strings[0] = "Yes";
             strings[1] = "No";
         } else {
             if(character.myKey == null){
-                strings[0] = "Pick first";
-                if(numberOfFoundKeys > 1){
-                    strings[1] = "Pick second";
-                }
-                if(numberOfFoundKeys > 2){
-                    strings[2] = "Pick third";
-                }
-                if(numberOfFoundKeys > 3){
-                    strings[3] = "Pick fourth";
+                for(int i = 0; i < numberOfFoundKeys; ++i){
+                    strings[i] = "Pick " + ((KeyMapObject)keys[i]).color;
                 }
             } else {
-                strings[0] = "Change to first";
-                if(numberOfFoundKeys > 1){
-                    strings[1] = "Change to second";
-                }
-                if(numberOfFoundKeys > 2){
-                    strings[2] = "Change to third";
-                }
-                if(numberOfFoundKeys > 3){
-                    strings[3] = "Change to fourth";
+                for(int i = 0; i < numberOfFoundKeys; ++i){
+                    strings[i] = "Change to " + ((KeyMapObject)keys[i]).color;
                 }
             }
             strings[numberOfFoundKeys] = "No";
@@ -1579,7 +1574,7 @@ public class ClassicGamePanel extends MapPanelBase {
         character.myKey = key;
         if(tempKey != null){
             myMap.cells[realCharacterx][realCharactery].mapObjects.add(tempKey);
-            visibleMap.cells[realCharacterx][realCharactery].mapObjects.add(tempKey);
+            visibleMap.cells[visibleCharacterx][visibleCharactery].mapObjects.add(tempKey);
         }
     }
 
@@ -1595,5 +1590,20 @@ public class ClassicGamePanel extends MapPanelBase {
             minYindex = miny;
             maxYindex = maxy;
         }
+    }
+
+    MiniMapPanel getLargestMiniMapWithPredicate(Predicate<MiniMapPanel> predicate){
+        int n = 0;
+        MiniMapPanel currentMiniMap = null;
+        for (MiniMapPanel miniMap: myMiniMapList) {
+            if(predicate.test(miniMap)){
+                int tempN = miniMap.getDiscoveredNumber();
+                if(tempN > n){
+                    currentMiniMap = miniMap;
+                    n = tempN;
+                }
+            }
+        }
+        return currentMiniMap;
     }
 }

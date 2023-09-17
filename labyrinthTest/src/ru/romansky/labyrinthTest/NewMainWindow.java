@@ -94,6 +94,9 @@ public class NewMainWindow {
     private JPanel helpMainScreenPanel;
     private JButton helpExitButton;
 
+    private Font buttonFont;
+    private Font textFont;
+
     LinkedBlockingQueue<GameEvent> fromClientToServer;
     LinkedBlockingQueue<ServerEvent> fromServerToClient;
     private MainWindowMode myMode;
@@ -109,6 +112,8 @@ public class NewMainWindow {
         mainPanel.add(simpleGamePanel,"simplegame");
         mainPanel.add(classicGamePanel,"classicgame");
         myLayout = (CardLayout) mainPanel.getLayout();
+        buttonFont = new Font("Arial", Font.PLAIN, 40);
+        textFont = new Font("Arial", Font.PLAIN, 30);
 
         myMode = MainWindowMode.MENU;
 
@@ -369,7 +374,9 @@ public class NewMainWindow {
         //simpleGameTextScrollPane.revalidate();
         //simpleGameTextArea.setSize(600,100);
         ((SimpleGamePanel)simpleGameMapPanel).setTextArea(simpleGameTextArea);
+        simpleGameTextArea.setFont(textFont);
 
+        simpleGameReturnButton.setFont(buttonFont);
         simpleGameReturnButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -377,7 +384,7 @@ public class NewMainWindow {
                 myMode = MainWindowMode.STARTGAME;
             }
         });
-
+        simpleGameExitButton.setFont(buttonFont);
         simpleGameExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -392,8 +399,12 @@ public class NewMainWindow {
 
         classicGameTextScrollPane.setPreferredSize(new Dimension(600, 50));
         ((ClassicGamePanel)classicGameMapPanel).setTextArea(classicGameTextArea);
+        classicGameTextArea.setFont(textFont);
+        classicGameTextArea.setMinimumSize(new Dimension(800, 200));
+        classicGameTextScrollPane.setPreferredSize(new Dimension(800, 200));
         ((ClassicGamePanel)classicGameMapPanel).setMiniMapPanel(miniMapPanel);
 
+        classicGameReturnButton.setFont(buttonFont);
         classicGameReturnButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -403,6 +414,7 @@ public class NewMainWindow {
             }
         });
 
+        classicGameExitButton.setFont(buttonFont);
         classicGameExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -421,26 +433,39 @@ public class NewMainWindow {
             generatePortalsComboBox.addItem(new Integer(i));
         }
         widthComboBox.setSelectedIndex(4);
+        widthComboBox.setFont(textFont);
         heightComboBox.setSelectedIndex(4);
+        heightComboBox.setFont(textFont);
         generatePortalsComboBox.setSelectedIndex(4);
+        generatePortalsComboBox.setFont(textFont);
         for(int i = 2; i < 6; ++i){
             generateMinRegionSizeComboBox.addItem(new Integer(i));
         }
         generateMinRegionSizeComboBox.setSelectedIndex(3);
+        generateMinRegionSizeComboBox.setFont(textFont);
+        generateMinRegionLabel.setFont(textFont);
         for(int i = 1; i < 11; ++i){
             maxRegionComboBox.addItem(new Integer(i));
         }
         maxRegionComboBox.setSelectedIndex(5);
+        maxRegionComboBox.setFont(textFont);
         generateMinotaursComboBox.addItem("zero");
         generateMinotaursComboBox.addItem("low");
         generateMinotaursComboBox.addItem("middle");
         generateMinotaursComboBox.addItem("high");
         generateMinotaursComboBox.addItem("they are everywhere!");
         generateMinotaursComboBox.setSelectedIndex(2);
+        generateMinotaursComboBox.setFont(textFont);
         stoppingProbabilityTextField.setText("0.1");
+        stoppingProbabilityTextField.setFont(textFont);
+        stoppingProbabilityLabel.setFont(textFont);
         branchingProbabilityTextField.setText("0.1");
+        branchingProbabilityTextField.setFont(textFont);
+        branchingProbabilityLabel.setFont(textFont);
         generateCycleCheckBox.setSelected(true);
+        generateCycleCheckBox.setFont(textFont);
 
+        generateButton.setFont(buttonFont);
         generateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -493,6 +518,7 @@ public class NewMainWindow {
             }
         });
 
+        generateBackButton.setFont(buttonFont);
         generateBackButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -507,6 +533,7 @@ public class NewMainWindow {
         helpMainScreenTextArea.setText("In the center of main screen you can see the game field, where you can move your character. In the upper-left there is current information about portals, minotaurs and your amount of bullets. In the bottom of the sreen there is a log of all your steps. And on the rigth side there is panel for opened parts of map.");
         helpControlsTextArea.setText("You can move throught the labyrinth using WASD on the keyboard. If there is not wall on your course, you will go through. Otherwise wall will appear on your map. In the beginning of every move, you can shoot in every direction to kill minotaurs, using arrows on keyboard. But you have only limited amount of bullets.");
         helpCollectMapTextArea.setText("To open the whole labyrinth, you should combine available map parts. They are represented on the mini map panel, on the right part of main screen. You can pick one of them with the mouse and drag it to the main map. If they will match, lines will be highlited with green colour, and you can combine them with mouse left-click. Click right buton if you want to stop dragging. Also you can delete unnecessary mini maps and split them, using buttons on them.");
+        helpBackButton.setFont(buttonFont);
         helpBackButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -514,6 +541,7 @@ public class NewMainWindow {
                 myMode = MainWindowMode.MENU;
             }
         });
+        helpExitButton.setFont(buttonFont);
         helpExitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -523,6 +551,7 @@ public class NewMainWindow {
     }
 
     private void setupOptionsPanel() {
+        optionsBackButton.setFont(buttonFont);
         optionsBackButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -534,22 +563,30 @@ public class NewMainWindow {
 
     private void setupStartGamePanel() {
         simpleGameMapPanel.setSize(600, 500);
+        sizeComboBox.setFont(textFont);
+        sizeLabel.setFont(textFont);
         for(int i = 6; i <= 12; ++i){
             sizeComboBox.addItem(new Integer(i));
         }
         sizeComboBox.setSelectedIndex(2);
 
+        difficultyComboBox.setFont(textFont);
+        difficultyLabel.setFont(textFont);
         difficultyComboBox.addItem("low");
         difficultyComboBox.addItem("middle");
         difficultyComboBox.addItem("high");
         difficultyComboBox.addItem("very high");
 
+        startMinotaursComboBox.setFont(textFont);
+        startMinotaursLabel.setFont(textFont);
         startMinotaursComboBox.addItem("zero");
         startMinotaursComboBox.addItem("low");
         startMinotaursComboBox.addItem("middle");
         startMinotaursComboBox.addItem("high");
         startMinotaursComboBox.addItem("they are everywhere!");
 
+        startPortalsComboBox.setFont(textFont);
+        startPortalsLabel.setFont(textFont);
         startPortalsComboBox.addItem("zero");
         startPortalsComboBox.addItem("low");
         startPortalsComboBox.addItem("middle");
@@ -583,6 +620,7 @@ public class NewMainWindow {
             }
         });*/
 
+        startClassicButton.setFont(buttonFont);
         startClassicButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -611,6 +649,7 @@ public class NewMainWindow {
             }
         });
 
+        startReturnButton.setFont(buttonFont);
         startReturnButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -705,6 +744,7 @@ public class NewMainWindow {
     }
 
     private void setupMenuPanel() {
+        newGameButton.setFont(buttonFont);
         newGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -713,6 +753,7 @@ public class NewMainWindow {
             }
         });
 
+        generatorButton.setFont(buttonFont);
         generatorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -721,6 +762,7 @@ public class NewMainWindow {
             }
         });
 
+        optionsButton.setFont(buttonFont);
         optionsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -729,6 +771,7 @@ public class NewMainWindow {
             }
         });
 
+        helpButton.setFont(buttonFont);
         helpButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -737,6 +780,7 @@ public class NewMainWindow {
             }
         });
 
+        exitButton.setFont(buttonFont);
         exitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

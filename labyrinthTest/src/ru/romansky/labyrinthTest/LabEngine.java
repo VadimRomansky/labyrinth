@@ -70,7 +70,7 @@ public class LabEngine implements Runnable {
                             int key = ((KeyGameEvent) gameEvent).keyCode;
                             if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_UP || key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
                                 myGamePanel.shootBullet(key);
-                                return;
+                                //return;
                             } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
                                 myGamePanel.moveCharacter(key);
                             }

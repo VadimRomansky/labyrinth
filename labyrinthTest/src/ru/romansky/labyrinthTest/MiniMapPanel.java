@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class MiniMapPanel extends JPanel {
     public static final int cellWidth = 15;
@@ -303,5 +304,39 @@ public class MiniMapPanel extends JPanel {
                 ((PortalCell)map.cells[i][j]).setVisibleNumber(number);
             }
         }
+    }
+
+    public int getDiscoveredNumber(){
+        int n = 0;
+        for(int i = 0; i < myMap.width;++i) {
+            for (int j = 0; j < myMap.height; ++j) {
+                if(myMap.cells[i][j].state == CellState.VISITED){
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
+
+    public boolean hasHospital(){
+        for(int i = 0; i < myMap.width;++i) {
+            for (int j = 0; j < myMap.height; ++j) {
+                if(myMap.cells[i][j] instanceof HospitalCell){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Pair<Integer, Integer> getCellCoordinates(Predicate<Cell> predicate){
+        for(int i = 0; i < myMap.width;++i) {
+            for (int j = 0; j < myMap.height; ++j) {
+                if(predicate.test(myMap.cells[i][j])){
+                    return new Pair<>(i,j);
+                }
+            }
+        }
+        return new Pair<>(-1,-1);
     }
 }

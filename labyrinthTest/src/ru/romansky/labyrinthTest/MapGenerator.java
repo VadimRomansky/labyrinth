@@ -381,12 +381,12 @@ public class MapGenerator {
     }
 
     private void placeKeys(LabyrinthMap map){
-        KeyMapObject trueKey = new KeyMapObject(true);
-        placeKey(map, trueKey);
+        int n = random.nextInt(4);
 
-        for(int i = 0; i < fakeKeysCount; ++i) {
-            KeyMapObject fakeKey = new KeyMapObject(false);
-            placeKey(map, fakeKey);
+        for(int i = 0; i < fakeKeysCount+1; ++i) {
+            boolean value = (i == n);
+            KeyMapObject key = new KeyMapObject(value, i);
+            placeKey(map, key);
         }
     }
 
