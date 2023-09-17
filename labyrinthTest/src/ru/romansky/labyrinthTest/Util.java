@@ -1,8 +1,5 @@
 package ru.romansky.labyrinthTest;
 
-import com.sun.javafx.scene.control.skin.LabeledImpl;
-import javafx.util.Pair;
-
 import java.util.*;
 
 public class Util {
@@ -185,7 +182,7 @@ public class Util {
     }
 
 
-    public static int[][] EvaluateDistancesBFS(LabyrinthMap map, int starti, int startj, boolean checkMinotaurs, boolean direction, Pair<Integer, Integer>[][] parents){
+    public static int[][] EvaluateDistancesBFS(LabyrinthMap map, int starti, int startj, boolean checkMinotaurs, boolean direction, CoordinatePair[][] parents){
         int[][] result = new int[map.width][map.height];
         int totalCount = map.width*map.height;
         for(int i = 0; i < map.width; ++i){
@@ -197,19 +194,19 @@ public class Util {
             }
         }
         result[starti][startj] = 0;
-        LinkedList<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
+        LinkedList<CoordinatePair> queue = new LinkedList<CoordinatePair>();
 
-        queue.addLast(new Pair<>(starti, startj));
+        queue.addLast(new CoordinatePair(starti, startj));
         int counter = 0;
         while(!queue.isEmpty()){
-            Pair<Integer, Integer> pair = queue.pollFirst();
-            int curi = pair.getKey();
-            int curj = pair.getValue();
+            CoordinatePair pair = queue.pollFirst();
+            int curi = pair.x;
+            int curj = pair.y;
             int dist = result[curi][curj] + 1;
 
-            for (Pair<Integer, Integer> tempPair:map.cells[curi][curj].connectedCells) {
-                int tempi = tempPair.getKey();
-                int tempj = tempPair.getValue();
+            for (CoordinatePair tempPair:map.cells[curi][curj].connectedCells) {
+                int tempi = tempPair.x;
+                int tempj = tempPair.y;
 
                 if(map.cells[tempi][tempj].type == CellType.PORTAL){
                     int portali;
@@ -229,10 +226,10 @@ public class Util {
                     counter++;
                     result[tempi][tempj] = dist;
                     if(parents != null){
-                        parents[tempi][tempj] = new Pair<Integer, Integer>(curi, curj);
+                        parents[tempi][tempj] = new CoordinatePair(curi, curj);
                     }
                     if((!checkMinotaurs) || (!map.cells[tempi][tempj].hasMinotaurus())){
-                        queue.addLast(new Pair<Integer, Integer>(tempi, tempj));
+                        queue.addLast(new CoordinatePair(tempi, tempj));
                     }
                 }
             }
@@ -240,17 +237,17 @@ public class Util {
         return result;
     }
 
-    public static List<Pair<Integer,Integer>> findWayBetweenCells(LabyrinthMap map, int starti, int startj, int finishi, int finishj, boolean checkMinotaurs, boolean direction){
-        LinkedList<Pair<Integer, Integer>> result = new LinkedList<>();
+    public static List<CoordinatePair> findWayBetweenCells(LabyrinthMap map, int starti, int startj, int finishi, int finishj, boolean checkMinotaurs, boolean direction){
+        LinkedList<CoordinatePair> result = new LinkedList<>();
         //result.add(new Pair<Integer, Integer>(starti, startj));
         boolean exists = false;
 
-        LinkedList<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
+        LinkedList<CoordinatePair> queue = new LinkedList<CoordinatePair>();
 
-        queue.addLast(new Pair<>(starti, startj));
+        queue.addLast(new CoordinatePair(starti, startj));
         int[][] visited = new int[map.width][map.height];
 
-        Pair<Integer, Integer>[][] parents = new Pair[map.width][map.height];
+        CoordinatePair[][] parents = new CoordinatePair[map.width][map.height];
 
         for(int i = 0; i < map.width; ++i){
             for(int j = 0; j < map.height; ++j){
@@ -262,13 +259,13 @@ public class Util {
 
 
         while(!queue.isEmpty()){
-            Pair<Integer, Integer> pair = queue.pollFirst();
-            int curi = pair.getKey();
-            int curj = pair.getValue();
+            CoordinatePair pair = queue.pollFirst();
+            int curi = pair.x;
+            int curj = pair.y;
 
-            for (Pair<Integer, Integer> tempPair:map.cells[curi][curj].connectedCells) {
-                int tempi = tempPair.getKey();
-                int tempj = tempPair.getValue();
+            for (CoordinatePair tempPair:map.cells[curi][curj].connectedCells) {
+                int tempi = tempPair.x;
+                int tempj = tempPair.y;
 
                 if(map.cells[tempi][tempj].type == CellType.PORTAL){
                     int portali;
@@ -286,24 +283,24 @@ public class Util {
 
                 if(visited[tempi][tempj] == 0){
                     visited[tempi][tempj] = 1;
-                    parents[tempi][tempj] = new Pair<Integer, Integer>(curi, curj);
+                    parents[tempi][tempj] = new CoordinatePair(curi, curj);
                     if(tempi == finishi && tempj == finishj){
                         exists = true;
                         break;
                     }
                     if((!checkMinotaurs) || (!map.cells[tempi][tempj].hasMinotaurus())){
-                        queue.addLast(new Pair<Integer, Integer>(tempi, tempj));
+                        queue.addLast(new CoordinatePair(tempi, tempj));
                     }
                 }
             }
         }
 
-        result.addFirst(new Pair<Integer, Integer>(finishi, finishj));
-        Pair<Integer, Integer> prev = parents[finishi][finishj];
+        result.addFirst(new CoordinatePair(finishi, finishj));
+        CoordinatePair prev = parents[finishi][finishj];
         while(prev != null){
-            int i = prev.getKey();
-            int j = prev.getValue();
-            result.addFirst(new Pair<Integer, Integer>(i,j));
+            int i = prev.x;
+            int j = prev.y;
+            result.addFirst(new CoordinatePair(i,j));
             prev = parents[i][j];
         }
 
@@ -331,25 +328,25 @@ public class Util {
             }
         }
         distances[starti][startj] = 0;
-        LinkedList<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
+        LinkedList<CoordinatePair> queue = new LinkedList<CoordinatePair>();
 
-        queue.addLast(new Pair<>(starti, startj));
+        queue.addLast(new CoordinatePair(starti, startj));
         while(!queue.isEmpty()){
-            Pair<Integer, Integer> pair = queue.pollFirst();
-            int curi = pair.getKey();
-            int curj = pair.getValue();
+            CoordinatePair pair = queue.pollFirst();
+            int curi = pair.x;
+            int curj = pair.y;
             int dist = distances[curi][curj] + 1;
 
             if(dist <= length || unlimited) {
-                for (Pair<Integer, Integer> tempPair : map.cells[curi][curj].connectedCells) {
-                    int tempi = tempPair.getKey();
-                    int tempj = tempPair.getValue();
+                for (CoordinatePair tempPair : map.cells[curi][curj].connectedCells) {
+                    int tempi = tempPair.x;
+                    int tempj = tempPair.y;
                     if (map.cells[tempi][tempj].type == CellType.PORTAL) {
                         result++;
                     } else {
                         if (distances[tempi][tempj] == -1) {
                             distances[tempi][tempj] = dist;
-                            queue.addLast(new Pair<Integer, Integer>(tempi, tempj));
+                            queue.addLast(new CoordinatePair(tempi, tempj));
                         }
                     }
                 }

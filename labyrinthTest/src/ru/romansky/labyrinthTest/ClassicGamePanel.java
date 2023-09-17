@@ -1,7 +1,5 @@
 package ru.romansky.labyrinthTest;
 
-import javafx.util.Pair;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -552,9 +550,9 @@ public class ClassicGamePanel extends MapPanelBase {
                 writeTextMessage(text);
                 MiniMapPanel miniMapPanel = getLargestMiniMapWithPredicate(o -> o.hasHospital());
                 if(miniMapPanel != null){
-                    Pair<Integer, Integer> hospitalCoordinates = miniMapPanel.getCellCoordinates(c -> c instanceof  HospitalCell);
-                    int shiftx = visibleMap.width/2 - hospitalCoordinates.getKey();
-                    int shifty = visibleMap.height/2 - hospitalCoordinates.getValue();
+                    CoordinatePair hospitalCoordinates = miniMapPanel.getCellCoordinates(c -> c instanceof  HospitalCell);
+                    int shiftx = visibleMap.width/2 - hospitalCoordinates.x;
+                    int shifty = visibleMap.height/2 - hospitalCoordinates.y;
                     addMiniMap(miniMapPanel.getMaps(),shiftx,shifty);
                 }
                 //repaint();
@@ -780,12 +778,12 @@ public class ClassicGamePanel extends MapPanelBase {
                 } else if(SwingUtilities.isRightMouseButton(e)){
                     Point point = e.getPoint();
                     if(miniMapPanel.mouseOnPortal(point)){
-                        Pair<Integer, Integer> coordinates = miniMapPanel.getSelectedCellCoordinates(point);
+                        CoordinatePair coordinates = miniMapPanel.getSelectedCellCoordinates(point);
                         String string = JOptionPane.showInputDialog(ClassicGamePanel.this,
                                 "Input number", null);
                         try {
                             int number = Integer.parseInt(string);
-                            miniMapPanel.setPortalNumber(coordinates.getKey(), coordinates.getValue(), number);
+                            miniMapPanel.setPortalNumber(coordinates.x, coordinates.y, number);
                         } catch (NumberFormatException exception){
 
                         }

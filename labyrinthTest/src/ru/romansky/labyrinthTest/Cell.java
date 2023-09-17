@@ -1,8 +1,5 @@
 package ru.romansky.labyrinthTest;
 
-
-import javafx.util.Pair;
-
 import java.awt.*;
 import java.util.Vector;
 
@@ -18,7 +15,7 @@ public class Cell {
     int setId;
     CellType type;
     CellState state;
-    Vector<Pair<Integer, Integer>> connectedCells;
+    Vector<CoordinatePair> connectedCells;
 
     Vector<MapObject> characters;
     Vector<PortableMapObject> mapObjects;

@@ -1,7 +1,5 @@
 package ru.romansky.labyrinthTest;
 
-import javafx.util.Pair;
-
 import java.util.*;
 
 import static java.lang.Thread.sleep;
@@ -102,9 +100,9 @@ public class MapGenerator {
             Integer currentx = 0;
             Integer currenty = 0;
             if (moles.empty()) {
-                Pair<Integer, Integer> current = findRandomNotVisited();
-                currentx = current.getKey();
-                currenty = current.getValue();
+                CoordinatePair current = findRandomNotVisited();
+                currentx = current.x;
+                currenty = current.y;
                 mole = new Mole(currentx, currenty, branchingProbability, stopProbability, currentSet);
                 visited[currentx][currenty] = 1;
                 visitedCount++;
@@ -114,13 +112,13 @@ public class MapGenerator {
                 mole = moles.pop();
             }
             while (!mole.isstopped()) {
-                Vector<Pair<Integer, Integer>> possibleSteps = collectPossibleSteps(mole, map);
+                Vector<CoordinatePair> possibleSteps = collectPossibleSteps(mole, map);
 
                 if (!possibleSteps.isEmpty()) {
                     int rand = random.nextInt(possibleSteps.size());
 
-                    int nextx = possibleSteps.get(rand).getKey();
-                    int nexty = possibleSteps.get(rand).getValue();
+                    int nextx = possibleSteps.get(rand).x;
+                    int nexty = possibleSteps.get(rand).y;
 
                     deleteBorderBetween(map, mole.currentx, mole.currenty, nextx, nexty);
 
@@ -137,8 +135,8 @@ public class MapGenerator {
                         possibleSteps = collectPossibleSteps(mole, map);
                         if (!possibleSteps.isEmpty()) {
                             rand = random.nextInt(possibleSteps.size());
-                            int branchx = possibleSteps.get(rand).getKey();
-                            int branchy = possibleSteps.get(rand).getValue();
+                            int branchx = possibleSteps.get(rand).x;
+                            int branchy = possibleSteps.get(rand).y;
                             deleteBorderBetween(map, mole.currentx, mole.currenty, branchx, branchy);
                             if (visited[branchx][branchy] == 0) {
                                 visited[branchx][branchy] = 1;
@@ -159,7 +157,7 @@ public class MapGenerator {
             }
         }
 
-        Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions = cleanupIsolatedRegions(map);
+        Vector<Pair<Integer, Vector<CoordinatePair>>> regions = cleanupIsolatedRegions(map);
 
         updateConnectedCells(map);
 
@@ -171,7 +169,7 @@ public class MapGenerator {
         placeArsenal(regions, map);
         placeHospital(regions, map);
 
-        List<Pair<Integer, Integer>> wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
+        List<CoordinatePair> wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
 
         for(int i = 0; i < minotaurusCount; ++i) {
             placeMinotaur(regions, map, wayFromHtoA);
@@ -202,7 +200,7 @@ public class MapGenerator {
     }
 
     private void outputDebubInfo(LabyrinthMap map) {
-        List<Pair<Integer, Integer>> wayFromHtoA;
+        List<CoordinatePair> wayFromHtoA;
         int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, false, null);
         int[][] dist1 = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, true, true, null);
 
@@ -246,11 +244,11 @@ public class MapGenerator {
         wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, false, true);
         if(wayFromHtoA != null){
             System.out.print("way from hospital to arsenal\n");
-            for (Pair<Integer, Integer> pair :
+            for (CoordinatePair pair :
                     wayFromHtoA) {
-                System.out.print(pair.getKey());
+                System.out.print(pair.x);
                 System.out.print(' ');
-                System.out.print(pair.getValue());
+                System.out.print(pair.y);
                 System.out.print('\n');
             }
         } else {
@@ -259,11 +257,11 @@ public class MapGenerator {
         wayFromHtoA = Util.findWayBetweenCells(map, map.hospitalx, map.hospitaly, map.arsenalx, map.arsenaly, true, true);
         if(wayFromHtoA != null){
             System.out.print("way from hospital to arsenal free from minotaurs\n");
-            for (Pair<Integer, Integer> pair :
+            for (CoordinatePair pair :
                     wayFromHtoA) {
-                System.out.print(pair.getKey());
+                System.out.print(pair.x);
                 System.out.print(' ');
-                System.out.print(pair.getValue());
+                System.out.print(pair.y);
                 System.out.print('\n');
             }
         } else {
@@ -271,7 +269,7 @@ public class MapGenerator {
         }
     }
 
-    private void placeRestPortals(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+    private void placeRestPortals(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map) {
         int curPortalsCount = regions.size();
         while(curPortalsCount < portalsCount){
             while (true) {
@@ -298,10 +296,10 @@ public class MapGenerator {
             return false;
         }
         //neighbours must have simple neighbour
-        for (Pair<Integer, Integer> tempCell :
+        for (CoordinatePair tempCell :
                 cell.connectedCells) {
-            int tempi = tempCell.getKey();
-            int tempj = tempCell.getValue();
+            int tempi = tempCell.x;
+            int tempj = tempCell.y;
             if(map.cells[tempi][tempj].type == CellType.PORTAL) {
                 if (!hasSimpleNeighbourExceptThis(map.cells[tempi][tempj], map, cell.x, cell.y)) {
                     return false;
@@ -313,10 +311,10 @@ public class MapGenerator {
 
     private boolean hasSimpleNeighbourExceptThis(Cell cell, LabyrinthMap map, int i, int j) {
         boolean result = false;
-        for (Pair<Integer, Integer> tempCell :
+        for (CoordinatePair tempCell :
                 cell.connectedCells) {
-            int tempi = tempCell.getKey();
-            int tempj = tempCell.getValue();
+            int tempi = tempCell.x;
+            int tempj = tempCell.y;
             if((tempi != i) && (tempj != j) && map.cells[tempi][tempj].type == CellType.SIMPLE_CELL){
                 result = true;
                 break;
@@ -327,10 +325,10 @@ public class MapGenerator {
 
     private boolean hasSimpleNeighbour(Cell cell, LabyrinthMap map) {
         boolean result = false;
-        for (Pair<Integer, Integer> tempCell :
+        for (CoordinatePair tempCell :
                 cell.connectedCells) {
-            int tempi = tempCell.getKey();
-            int tempj = tempCell.getValue();
+            int tempi = tempCell.x;
+            int tempj = tempCell.y;
             if(map.cells[tempi][tempj].type == CellType.SIMPLE_CELL){
                 result = true;
                 break;
@@ -413,7 +411,7 @@ public class MapGenerator {
         return false;
     }
 
-    private void placeMinotaur(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map, List<Pair<Integer, Integer>> wayFromHtoA) {
+    private void placeMinotaur(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map, List<CoordinatePair> wayFromHtoA) {
         while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
@@ -426,13 +424,13 @@ public class MapGenerator {
         }
     }
 
-    private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j, List<Pair<Integer, Integer>> wayFromHtoA) {
+    private boolean cellFitToMinotaur(LabyrinthMap map, int i, int j, List<CoordinatePair> wayFromHtoA) {
         if (!((map.cells[i][j].type == CellType.SIMPLE_CELL) && map.cells[i][j].minotaur == null)){
             return false;
         }
-        for (Pair<Integer, Integer> pair : wayFromHtoA) {
-            int tempi = pair.getKey();
-            int tempj = pair.getValue();
+        for (CoordinatePair pair : wayFromHtoA) {
+            int tempi = pair.x;
+            int tempj = pair.y;
             if(tempi == i && tempj == j){
                 return false;
             }
@@ -440,7 +438,7 @@ public class MapGenerator {
         return true;
     }
 
-    private void placeCharacter(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+    private void placeCharacter(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map) {
         while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
@@ -455,7 +453,7 @@ public class MapGenerator {
         return map.cells[i][j].minotaur == null;
     }
 
-    private void placeHospital(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+    private void placeHospital(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map) {
         /*while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
@@ -467,19 +465,19 @@ public class MapGenerator {
                 return;
             }
         }*/
-        Pair<Integer, Integer>[][] parents = new Pair[width][height];
+        CoordinatePair[][] parents = new CoordinatePair[width][height];
         int[][] dist = Util.EvaluateDistancesBFS(map, map.arsenalx, map.arsenaly, false, false, parents);
-        Pair<Integer, Integer> tempCoords = findPlaceForHospital(map, dist);
+        CoordinatePair tempCoords = findPlaceForHospital(map, dist);
 
-        int i = tempCoords.getKey();
-        int j = tempCoords.getValue();
+        int i = tempCoords.x;
+        int j = tempCoords.y;
         HospitalCell cell = new HospitalCell(map.cells[i][j]);
         map.cells[i][j] = cell;
         map.hospitalx = i;
         map.hospitaly = j;
     }
 
-    private Pair<Integer, Integer> findPlaceForHospital(LabyrinthMap map, int[][] dist) {
+    private CoordinatePair findPlaceForHospital(LabyrinthMap map, int[][] dist) {
         Vector<Triplet<Integer, Integer, Integer>> candidates = new Vector<>();
         int preferedDistToArsenal = (map.width + map.height);
         int lengthToPortal = preferedDistToArsenal/4;
@@ -508,7 +506,7 @@ public class MapGenerator {
                 for(int i = 0; i < map.width; ++i){
                     for(int j = 0; j < map.height; ++j){
                         if((dist[i][j] == currentDist) && (map.cells[i][j].type == CellType.SIMPLE_CELL)){
-                            return new Pair<Integer, Integer>(i, j);
+                            return new CoordinatePair(i, j);
                         }
                     }
                 }
@@ -521,7 +519,7 @@ public class MapGenerator {
         }
 
         Triplet<Integer, Integer, Integer> triplet = candidates.get(random.nextInt(candidates.size()));
-        return new Pair<Integer, Integer>(triplet.getSecond(), triplet.getThird());
+        return new CoordinatePair(triplet.getSecond(), triplet.getThird());
     }
 
     private boolean cellFitToHospital(LabyrinthMap map, int i, int j) {
@@ -529,7 +527,7 @@ public class MapGenerator {
         return cell.type == CellType.SIMPLE_CELL;
     }
 
-    private void placeArsenal(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, final LabyrinthMap map) {
+    private void placeArsenal(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, final LabyrinthMap map) {
         /*while (true) {
             int i = random.nextInt(map.width);
             int j = random.nextInt(map.height);
@@ -580,15 +578,15 @@ public class MapGenerator {
         return cell.type == CellType.SIMPLE_CELL;
     }
 
-    private void placePortalToEveryRegion(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, LabyrinthMap map) {
+    private void placePortalToEveryRegion(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map) {
         if(regions.size() > 1) {
             for (int i = 0; i < regions.size(); ++i) {
-                Vector<Pair<Integer, Integer>> region = regions.get(i).getValue();
+                Vector<CoordinatePair> region = regions.get(i).getSecond();
                 int hiddenCellNumber = 0;
                 int hiddenCellBorders = 0;
                 for (int j = 0; j < region.size(); ++j) {
-                    int x = region.get(j).getKey();
-                    int y = region.get(j).getValue();
+                    int x = region.get(j).x;
+                    int y = region.get(j).y;
                     int borderCount = 4 - map.cells[x][y].connectedCells.size();
                     if (borderCount >= hiddenCellBorders) {
                         hiddenCellNumber = j;
@@ -596,8 +594,8 @@ public class MapGenerator {
                     }
                     //todo rendomize!
                 }
-                int px = region.get(hiddenCellNumber).getKey();
-                int py = region.get(hiddenCellNumber).getValue();
+                int px = region.get(hiddenCellNumber).x;
+                int py = region.get(hiddenCellNumber).y;
                 //PortalCell portal = new PortalCell(-1, map.cells[px][py]);
                 PortalCell portal = new PortalCell(i, map.cells[px][py]);
                 map.cells[px][py] = portal;
@@ -616,24 +614,24 @@ public class MapGenerator {
 
     private void updateConnectedCells(int i, int j, LabyrinthMap map) {
         if (map.horizontalBorders[i][j].state() == BorderState.NOTEXISTS) {
-            map.cells[i][j].connectedCells.add(new Pair<>(i, j - 1));
+            map.cells[i][j].connectedCells.add(new CoordinatePair(i, j - 1));
         }
         if (map.horizontalBorders[i][j + 1].state() == BorderState.NOTEXISTS) {
-            map.cells[i][j].connectedCells.add(new Pair<>(i, j + 1));
+            map.cells[i][j].connectedCells.add(new CoordinatePair(i, j + 1));
         }
         if (map.verticalBorders[i][j].state() == BorderState.NOTEXISTS) {
-            map.cells[i][j].connectedCells.add(new Pair<>(i - 1, j));
+            map.cells[i][j].connectedCells.add(new CoordinatePair(i - 1, j));
         }
         if (map.verticalBorders[i + 1][j].state() == BorderState.NOTEXISTS) {
-            map.cells[i][j].connectedCells.add(new Pair<>(i + 1, j));
+            map.cells[i][j].connectedCells.add(new CoordinatePair(i + 1, j));
         }
     }
 
-    private Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> cleanupIsolatedRegions(LabyrinthMap map) throws InterruptedException {
-        Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions = collectRegions(map);
+    private Vector<Pair<Integer, Vector<CoordinatePair>>> cleanupIsolatedRegions(LabyrinthMap map) throws InterruptedException {
+        Vector<Pair<Integer, Vector<CoordinatePair>>> regions = collectRegions(map);
         sortRegionsByNumber(regions);
         if (regions.size() > 1) {
-            while (regions.lastElement().getValue().size() < minRegionSize) {
+            while (regions.lastElement().getSecond().size() < minRegionSize) {
                 cleanupSmallestRegion(map, regions);
             }
             while(((regions.size() > portalsCount) || (regions.size() > maxRegionsCount)) && regions.size() > 1){
@@ -645,30 +643,30 @@ public class MapGenerator {
         return regions;
     }
 
-    private void cleanupSmallestRegion(LabyrinthMap map, Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions) throws InterruptedException {
-        Pair<Integer, Vector<Pair<Integer, Integer>>> temp = regions.lastElement();
-        Vector<Pair<Integer, Integer>> region = temp.getValue();
+    private void cleanupSmallestRegion(LabyrinthMap map, Vector<Pair<Integer, Vector<CoordinatePair>>> regions) throws InterruptedException {
+        Pair<Integer, Vector<CoordinatePair>> temp = regions.lastElement();
+        Vector<CoordinatePair> region = temp.getSecond();
 
-        Pair<Integer, Integer> connectionCoordinates = findConnectionCoordinates(region, map);
+        CoordinatePair connectionCoordinates = findConnectionCoordinates(region, map);
 
-        Pair<Integer, Integer> toConnectionCoordinates = findToConnectionoCordinates(connectionCoordinates, map);
+        CoordinatePair toConnectionCoordinates = findToConnectionoCordinates(connectionCoordinates, map);
 
-        int i = connectionCoordinates.getKey();
-        int j = connectionCoordinates.getValue();
-        int tempi = toConnectionCoordinates.getKey();
-        int tempj = toConnectionCoordinates.getValue();
+        int i = connectionCoordinates.x;
+        int j = connectionCoordinates.y;
+        int tempi = toConnectionCoordinates.x;
+        int tempj = toConnectionCoordinates.y;
 
         int newSetId = map.cells[tempi][tempj].setId;
         int newRegionNumber = -1;
         for (int l = 0; l < regions.size(); ++l) {
-            if (regions.get(l).getKey().equals(newSetId)) {
+            if (regions.get(l).getFirst().equals(newSetId)) {
                 newRegionNumber = l;
                 break;
             }
         }
-        Vector<Pair<Integer, Integer>> newRegion = regions.get(newRegionNumber).getValue();
+        Vector<CoordinatePair> newRegion = regions.get(newRegionNumber).getSecond();
         for (int l = 0; l < region.size(); ++l) {
-            map.cells[region.get(l).getKey()][region.get(l).getValue()].setId = newSetId;
+            map.cells[region.get(l).x][region.get(l).y].setId = newSetId;
         }
         newRegion.addAll(region);
         regions.removeElementAt(regions.size() - 1);
@@ -677,12 +675,12 @@ public class MapGenerator {
         deleteBorderBetween(map, i, j, tempi, tempj);
     }
 
-    private void moveUpRegion(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions, int newRegionNumber) {
+    private void moveUpRegion(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, int newRegionNumber) {
         for (int i = newRegionNumber; i > 0; --i) {
-            int curNumber = regions.get(i).getValue().size();
-            int prevNumber = regions.get(i - 1).getValue().size();
+            int curNumber = regions.get(i).getSecond().size();
+            int prevNumber = regions.get(i - 1).getSecond().size();
             if (curNumber > prevNumber) {
-                Pair<Integer, Vector<Pair<Integer, Integer>>> temp = regions.get(i - 1);
+                Pair<Integer, Vector<CoordinatePair>> temp = regions.get(i - 1);
                 regions.set(i - 1, regions.get(i));
                 regions.set(i, temp);
             } else {
@@ -691,29 +689,29 @@ public class MapGenerator {
         }
     }
 
-    private Pair<Integer, Integer> findToConnectionoCordinates(Pair<Integer, Integer> connectionCoordinates, LabyrinthMap map) {
-        Vector<Pair<Integer, Integer>> coords = new Vector<>();
-        int i = connectionCoordinates.getKey();
-        int j = connectionCoordinates.getValue();
+    private CoordinatePair findToConnectionoCordinates(CoordinatePair connectionCoordinates, LabyrinthMap map) {
+        Vector<CoordinatePair> coords = new Vector<>();
+        int i = connectionCoordinates.x;
+        int j = connectionCoordinates.y;
 
         if (i > 0) {
             if (map.cells[i - 1][j].setId != map.cells[i][j].setId) {
-                coords.add(new Pair<>(i - 1, j));
+                coords.add(new CoordinatePair(i - 1, j));
             }
         }
         if (i < width - 1) {
             if (map.cells[i + 1][j].setId != map.cells[i][j].setId) {
-                coords.add(new Pair<>(i + 1, j));
+                coords.add(new CoordinatePair(i + 1, j));
             }
         }
         if (j > 0) {
             if (map.cells[i][j - 1].setId != map.cells[i][j].setId) {
-                coords.add(new Pair<>(i, j - 1));
+                coords.add(new CoordinatePair(i, j - 1));
             }
         }
         if (j < height - 1) {
             if (map.cells[i][j + 1].setId != map.cells[i][j].setId) {
-                coords.add(new Pair<>(i, j + 1));
+                coords.add(new CoordinatePair(i, j + 1));
             }
         }
 
@@ -721,51 +719,51 @@ public class MapGenerator {
         return coords.get(k);
     }
 
-    private Pair<Integer, Integer> findConnectionCoordinates(Vector<Pair<Integer, Integer>> region, LabyrinthMap map) {
-        Pair<Integer, Integer> result = null;
+    private CoordinatePair findConnectionCoordinates(Vector<CoordinatePair> region, LabyrinthMap map) {
+        CoordinatePair result = null;
         while (true) {
             int k = random.nextInt(region.size());
 
-            int i = region.get(k).getKey();
-            int j = region.get(k).getValue();
+            int i = region.get(k).x;
+            int j = region.get(k).y;
 
             if (i > 0) {
                 if (map.cells[i - 1][j].setId != map.cells[i][j].setId) {
-                    result = new Pair<Integer, Integer>(i, j);
+                    result = new CoordinatePair(i, j);
                     return result;
                 }
             }
             if (i < width - 1) {
                 if (map.cells[i + 1][j].setId != map.cells[i][j].setId) {
-                    result = new Pair<Integer, Integer>(i, j);
+                    result = new CoordinatePair(i, j);
                     return result;
                 }
             }
 
             if (j > 0) {
                 if (map.cells[i][j - 1].setId != map.cells[i][j].setId) {
-                    result = new Pair<Integer, Integer>(i, j);
+                    result = new CoordinatePair(i, j);
                     return result;
                 }
             }
 
             if (j < height - 1) {
                 if (map.cells[i][j + 1].setId != map.cells[i][j].setId) {
-                    result = new Pair<Integer, Integer>(i, j);
+                    result = new CoordinatePair(i, j);
                     return result;
                 }
             }
         }
     }
 
-    private void sortRegionsByNumber(Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions) {
+    private void sortRegionsByNumber(Vector<Pair<Integer, Vector<CoordinatePair>>> regions) {
         if (regions.size() <= 1) return;
         for (int i = regions.size(); i > 1; --i) {
             for (int j = 1; j < i; ++j) {
-                int prevNumber = regions.get(j - 1).getValue().size();
-                int curNumber = regions.get(j).getValue().size();
+                int prevNumber = regions.get(j - 1).getSecond().size();
+                int curNumber = regions.get(j).getSecond().size();
                 if (curNumber > prevNumber) {
-                    Pair<Integer, Vector<Pair<Integer, Integer>>> temp = regions.get(j - 1);
+                    Pair<Integer, Vector<CoordinatePair>> temp = regions.get(j - 1);
                     regions.set(j - 1, regions.get(j));
                     regions.set(j, temp);
                 }
@@ -773,25 +771,25 @@ public class MapGenerator {
         }
     }
 
-    private Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> collectRegions(LabyrinthMap map) {
-        Vector<Pair<Integer, Vector<Pair<Integer, Integer>>>> regions = new Vector<>();
+    private Vector<Pair<Integer, Vector<CoordinatePair>>> collectRegions(LabyrinthMap map) {
+        Vector<Pair<Integer, Vector<CoordinatePair>>> regions = new Vector<>();
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
                 int setId = map.cells[i][j].setId;
-                Vector<Pair<Integer, Integer>> vector = null;
+                Vector<CoordinatePair> vector = null;
                 for (int k = 0; k < regions.size(); ++k) {
-                    Pair<Integer, Vector<Pair<Integer, Integer>>> pair = regions.get(k);
-                    if (pair.getKey().equals(setId)) {
-                        vector = pair.getValue();
+                    Pair<Integer, Vector<CoordinatePair>> pair = regions.get(k);
+                    if (pair.getFirst().equals(setId)) {
+                        vector = pair.getSecond();
                         break;
                     }
                 }
                 if (vector == null) {
                     vector = new Vector<>();
-                    vector.add(new Pair<Integer, Integer>(i, j));
+                    vector.add(new CoordinatePair(i, j));
                     regions.add(new Pair(setId, vector));
                 } else {
-                    vector.add(new Pair<Integer, Integer>(i, j));
+                    vector.add(new CoordinatePair(i, j));
                 }
             }
         }
@@ -824,8 +822,8 @@ public class MapGenerator {
         }
     }
 
-    private Vector<Pair<Integer, Integer>> collectPossibleSteps(Mole mole, LabyrinthMap map) {
-        Vector<Pair<Integer, Integer>> result = new Vector<>();
+    private Vector<CoordinatePair> collectPossibleSteps(Mole mole, LabyrinthMap map) {
+        Vector<CoordinatePair> result = new Vector<>();
 
         int tempi = mole.currentx;
         int tempj = mole.currenty;
@@ -833,25 +831,25 @@ public class MapGenerator {
         tempi = mole.currentx;
         tempj = mole.currenty + 1;
         if (stepUpIsPossible(mole, tempi, tempj, map)) {
-            result.add(new Pair<>(tempi, tempj));
+            result.add(new CoordinatePair(tempi, tempj));
         }
 
         tempi = mole.currentx;
         tempj = mole.currenty - 1;
         if (stepDownIsPossible(mole, tempi, tempj, map)) {
-            result.add(new Pair<>(tempi, tempj));
+            result.add(new CoordinatePair(tempi, tempj));
         }
 
         tempi = mole.currentx - 1;
         tempj = mole.currenty;
         if (stepLeftIsPossible(mole, tempi, tempj, map)) {
-            result.add(new Pair<>(tempi, tempj));
+            result.add(new CoordinatePair(tempi, tempj));
         }
 
         tempi = mole.currentx + 1;
         tempj = mole.currenty;
         if (stepRightIsPossible(mole, tempi, tempj, map)) {
-            result.add(new Pair<>(tempi, tempj));
+            result.add(new CoordinatePair(tempi, tempj));
         }
 
         return result;
@@ -937,19 +935,19 @@ public class MapGenerator {
         return false;
     }
 
-    private Pair<Integer, Integer> findRandomNotVisited() {
-        Vector<Pair<Integer, Integer>> notVisited = new Vector<Pair<Integer, Integer>>();
+    private CoordinatePair findRandomNotVisited() {
+        Vector<CoordinatePair> notVisited = new Vector<CoordinatePair>();
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
                 if (visited[i][j] == 0) {
-                    notVisited.add(new Pair<>(i, j));
+                    notVisited.add(new CoordinatePair(i, j));
                 }
             }
         }
 
         int k = random.nextInt(notVisited.size());
 
-        Pair<Integer, Integer> result = notVisited.get(k);
+        CoordinatePair result = notVisited.get(k);
 
         return result;
     }

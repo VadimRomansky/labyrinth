@@ -1,7 +1,5 @@
 package ru.romansky.labyrinthTest;
 
-import javafx.util.Pair;
-
 import javax.swing.*;
 
 import java.awt.*;
@@ -265,7 +263,7 @@ public class MiniMapPanel extends JPanel {
         return null;
     }
 
-    public Pair<Integer, Integer> getSelectedCellCoordinates(Point point){
+    public CoordinatePair getSelectedCellCoordinates(Point point){
         int x = point.x;
         int y = point.y;
         int width = getWidth();
@@ -280,7 +278,7 @@ public class MiniMapPanel extends JPanel {
         int j = (y - topY)/(cellWidth + borderWidth);
         if(i >= 0 && j >= 0 && i < myMap.width && j < myMap.height) {
             if (myMap.cells[i][j].state == CellState.VISITED) { //todo?
-                return new Pair<>(i,j);
+                return new CoordinatePair(i,j);
             }
         }
         return null;
@@ -329,14 +327,14 @@ public class MiniMapPanel extends JPanel {
         return false;
     }
 
-    public Pair<Integer, Integer> getCellCoordinates(Predicate<Cell> predicate){
+    public CoordinatePair getCellCoordinates(Predicate<Cell> predicate){
         for(int i = 0; i < myMap.width;++i) {
             for (int j = 0; j < myMap.height; ++j) {
                 if(predicate.test(myMap.cells[i][j])){
-                    return new Pair<>(i,j);
+                    return new CoordinatePair(i,j);
                 }
             }
         }
-        return new Pair<>(-1,-1);
+        return new CoordinatePair(-1,-1);
     }
 }
