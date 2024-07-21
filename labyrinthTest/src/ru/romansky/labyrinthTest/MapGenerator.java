@@ -31,7 +31,7 @@ public class MapGenerator {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
-        randomSeed = 85779687;
+        //randomSeed = 85779687;
         random.setSeed(randomSeed);
         System.out.print("random seed = ");
         System.out.print(randomSeed);
@@ -55,7 +55,7 @@ public class MapGenerator {
         myMapPanel = mapPanel;
         random = new Random();
         randomSeed = random.nextInt();
-        randomSeed = -1518730460;
+        //randomSeed = -1518730460;
         random.setSeed(randomSeed);
         System.out.print("random seed = ");
         System.out.print(randomSeed);
