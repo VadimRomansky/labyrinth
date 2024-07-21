@@ -18,6 +18,7 @@ public class Cell {
     Vector<CoordinatePair> connectedCells;
 
     Vector<MapObject> characters;
+    Vector<MapObject> mobs;
     Vector<PortableMapObject> mapObjects;
     Minotaur minotaur = null;
 
@@ -27,6 +28,7 @@ public class Cell {
         setId = id;
         connectedCells = new Vector<>();
         characters = new Vector<>();
+        mobs = new Vector<>();
         mapObjects = new Vector<>();
         type = CellType.SIMPLE_CELL;
         state = CellState.UNDEFINED;
@@ -50,6 +52,9 @@ public class Cell {
         if(minotaur != null){
             minotaur.paint(g, cellx, celly);
         }
+        for(MapObject object: mobs){
+            object.paint(g, cellx, celly);
+        }
         for (MapObject object : characters) {
             object.paint(g, cellx, celly);
         }
@@ -60,6 +65,10 @@ public class Cell {
 
     public void addCharacter(MapObject object) {
         characters.add(object);
+    }
+
+    public void addMob(MapObject object) {
+        mobs.add(object);
     }
 
     boolean hasMinotaurus(){

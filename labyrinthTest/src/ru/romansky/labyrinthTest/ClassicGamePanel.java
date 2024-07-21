@@ -17,7 +17,7 @@ import static java.lang.Math.floor;
 import static java.lang.Math.round;
 import static java.lang.Thread.sleep;
 
-enum GameState {NORMAL, GAME_OVER, DIALOG_ONE_KEY}
+enum GameState {NORMAL, GAME_OVER, DIALOG_ONE_KEY, MOB_TURN}
 
 public class ClassicGamePanel extends MapPanelBase {
     public GameState gameState;
@@ -1574,6 +1574,10 @@ public class ClassicGamePanel extends MapPanelBase {
             myMap.cells[realCharacterx][realCharactery].mapObjects.add(tempKey);
             visibleMap.cells[visibleCharacterx][visibleCharactery].mapObjects.add(tempKey);
         }
+    }
+
+    public void moveMob(int direction) {
+
     }
 
     private class IndexContainer{

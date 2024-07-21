@@ -175,12 +175,33 @@ public class MapGenerator {
             placeMinotaur(regions, map, wayFromHtoA);
         }
         placeKeys(map);
+        placeMob(map);
         placeCharacter(regions, map);
 
         placeExit(map);
 
         outputDebubInfo(map);
     }
+
+    private void placeMob(LabyrinthMap map) {
+
+        while (true) {
+            int i = random.nextInt(map.width);
+            int j = random.nextInt(map.height);
+            if (cellFitToMob(map, i, j)) {
+                map.cells[i][j].addMob(new Mob());
+                map.mobx = i;
+                map.moby = j;
+                return;
+            }
+        }
+    }
+
+    private boolean cellFitToMob(LabyrinthMap map, int i, int j) {
+
+        return map.cells[i][j].minotaur == null;
+    }
+
 
     private void placeExit(LabyrinthMap map) {
         int randN = random.nextInt(2);
@@ -450,7 +471,13 @@ public class MapGenerator {
     }
 
     private boolean cellFitToCharacter(LabyrinthMap map, int i, int j) {
-        return map.cells[i][j].minotaur == null;
+        if (map.cells[i][j].minotaur != null){
+            return false;
+        }
+        if((map.mobx == i)&&(map.moby == j)){
+            return false;
+        };
+        return true;
     }
 
     private void placeHospital(Vector<Pair<Integer, Vector<CoordinatePair>>> regions, LabyrinthMap map) {

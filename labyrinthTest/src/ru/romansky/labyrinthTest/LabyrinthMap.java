@@ -14,6 +14,9 @@ public class LabyrinthMap {
     int exitx = -1;
     int exity = -1;
 
+    int mobx = -1;
+    int moby = -1;
+
     int minotaursCount = 0;
     int aliveMinotaursCount = 0;
     int portalsCount = 0;
@@ -77,6 +80,9 @@ public class LabyrinthMap {
     public LabyrinthMap(LabyrinthMap map) {
         width = map.width;
         height = map.height;
+
+        mobx = map.mobx;
+        moby = map.moby;
 
         cells = new Cell[width][height];
         verticalBorders = new VerticalBorder[width+1][height];

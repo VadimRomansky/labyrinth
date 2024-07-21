@@ -1,6 +1,7 @@
 package ru.romansky.labyrinthTest;
 
 import java.awt.event.KeyEvent;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,6 +48,9 @@ public class LabEngine implements Runnable {
     @Override
     public void run() {
         synchronized (this) {
+            Random random = new Random();
+            int randomSeed = random.nextInt();
+            random.setSeed(randomSeed);
             while (true) {
                 /*try {
                     wait();
@@ -73,12 +77,23 @@ public class LabEngine implements Runnable {
                                 //return;
                             } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_S || key == KeyEvent.VK_A || key == KeyEvent.VK_D) {
                                 myGamePanel.moveCharacter(key);
+
+                                try {
+                                    fromClientToServer.put(new MobTurnGameEvent(random.nextInt(4)));
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     } else if(myGamePanel.gameState == GameState.DIALOG_ONE_KEY){
                         if (gameEvent instanceof DialogGameEvent) {
                             int number = ((DialogGameEvent) gameEvent).chosenNumber;
                             myGamePanel.handleDialog(number);
+                        }
+                    } else if(myGamePanel.gameState == GameState.MOB_TURN){
+                        if(gameEvent instanceof MobTurnGameEvent){
+                            int direction = ((MobTurnGameEvent) gameEvent).direction;
+                            myGamePanel.moveMob(direction);
                         }
                     }
                 }
